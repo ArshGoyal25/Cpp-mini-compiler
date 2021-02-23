@@ -17,6 +17,7 @@ FILE *f_tokens;
 digit       [0-9]
 letter      [a-zA-Z_]
 id          {letter}({letter}|{digit})*
+header		[<]({letter})+[.][h][>]
 digits      {digit}+
 opFraction  (\.{digits})?
 opExponent  ([Ee][+-]?{digits})?
@@ -76,6 +77,7 @@ false|FALSE				{ fprintf(f_tokens,"<CONS, '%s', %d>\n",yytext,line_no); return B
 {digits}{opFraction}	{ yylval.fval=atof(yytext); fprintf(f_tokens,"<CONS, 'FLOAT', %f, %d>\n",yylval.fval,line_no); return FLOAT_CONS;}
 \'{letter}\' 			{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<CONS, 'CHAR', %c, %d>\n",yylval.sval[1],line_no); return CHAR_CONS;}
 \".*\" 					{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<CONS, 'STRING', %s, %d>\n",yytext,line_no); return STRING_CONS;}
+{header}				{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<CONS, 'HEADER', %s, %d>\n",yytext,line_no); return HEADER;}
 
 
 [\n] { line_no++;}

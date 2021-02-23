@@ -14,11 +14,11 @@ void yyerror(char *s);
 %token <sval> ID
 %token <ival> INT_CONS
 %token <fval> FLOAT_CONS
-%token <sval> STRING_CONS CHAR_CONS BOOL_CONS
+%token <sval> STRING_CONS CHAR_CONS BOOL_CONS HEADER
 
 %token TYPE_SPEC PRO_BEG
 
-%token IF BREAK CONTINUE RETURN COUT
+%token IF BREAK CONTINUE RETURN COUT INCLUDE
 %token WHILE SWITCH CASE DEFAULT
 
 %token LT GT LE GE EQ NE
@@ -27,8 +27,15 @@ void yyerror(char *s);
 
 %token ERR
 %%
-start	:	PRO_BEG left_brac_s right_brac_s left_brac_c compound_statement right_brac_c { printf("Program accepted\n"); YYACCEPT; }
-        ;
+start           : header { printf("Program accepted\n"); YYACCEPT; }
+header          : include main 
+                | main
+main	        : PRO_BEG left_brac_s right_brac_s left_brac_c compound_statement right_brac_c 
+                ;
+include         : '#' INCLUDE HEADER
+                | include '#' INCLUDE HEADER
+                ;
+                ;
 left_brac_s     : '('
                 | error { yyerror("Missing left bracet s\n");}
     		    ;
@@ -107,7 +114,7 @@ arit_expression         : value
                         | value '%' arit_expression                 
                         ;
 
-value               :   ID 
+value               :   ID {printf("%s ,line : %d \n", $1, line_no);}
                     |   INT_CONS 
                     |   FLOAT_CONS 
                     |   STRING_CONS

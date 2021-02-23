@@ -138,6 +138,7 @@ int main()
     f_tokens = fopen("tokens.txt","w");
 
     yyparse();
+
     fclose(f_tokens);
     return 0;
 }

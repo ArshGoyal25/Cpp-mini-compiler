@@ -10,7 +10,7 @@ int main()
     switch(day)
     {
         case 1:
-            cout<<"Monday";
+            cout<<"Monday \n";
             break;
         case 4:
             cout<<"Thursday";

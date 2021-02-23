@@ -6,23 +6,24 @@
 
 extern YYSTYPE yylval;
 
-int line_no = 1;
+int line_number = 1;
 int line_of_declaration = 0;
 int scope = 0;
-#define report_token(type, lexeme, line_no) fprintf(f_tokens, "<%s, '%s', %d>\n", type, lexeme, line_no);
+#define report_token(type, lexeme, line_number) fprintf(f_tokens, "<%s, '%s', %d>\n", type, lexeme, line_number);
 
 FILE *f_tokens;
 
 %}
 
-digit       [0-9]
-letter      [a-zA-Z_]
-id          {letter}({letter}|{digit})*
-header		[<]({letter})+[.][h][>]
-digits      {digit}+
-opFraction  (\.{digits})?
-opExponent  ([Ee][+-]?{digits})?
-number      {digits}{opFraction}{opExponent}
+digit       		[0-9]
+letter      		[a-zA-Z_]
+id          		{letter}({letter}|{digit})*
+header				[<]({letter})+[.][h][>]
+digits      		{digit}+
+opFraction  		(\.{digits})?
+opExponent  		([Ee][+-]?{digits})?
+number      		{digits}{opFraction}{opExponent}
+preprocess 			#(define|include<.+>)
 
 %%
 
@@ -30,59 +31,70 @@ number      {digits}{opFraction}{opExponent}
 ([ ]*|(\n\t)*|(\n)*|(\t)*)*\/\/.* 
 ([ ]*|(\n\t)*|(\n)*|(\t)*)*\/\*(.*\n)*.*\*\/ 
 
-int[ ]main 			{ report_token("KEYW", "int", line_no); report_token("KEYW", "main", line_no); return PRO_BEG;}
+int[ ]main 			{ report_token("KEYW", "int", line_number); report_token("KEYW", "main", line_number); return PRO_BEG;}
 
 
-int|char|float|void|double|long\ +long { report_token("KEYW", yytext, line_no); return TYPE_SPEC;}
+int|char|float|void|double|long[ ]+long { report_token("KEYW", yytext, line_number); return TYPE_SPEC;}
+
+	/* ___ PREPROCESS DIRECTIVE ___ */
+{preprocess}			{ return PRE_DIR; }
+
+	/* ___ KEYWORDS ___*/
 
 if 					{  return IF;}
-break 				{ report_token("KEYW", yytext, line_no); return BREAK;}
-continue			{ report_token("KEYW", yytext, line_no); return CONTINUE;}
-while				{ report_token("KEYW", yytext, line_no); return WHILE;}
-return				{ report_token("KEYW", yytext, line_no); return RETURN;}
-switch				{ report_token("KEYW", yytext, line_no); return SWITCH;}
-case				{ report_token("KEYW", yytext, line_no); return CASE;}
-default				{ report_token("KEYW", yytext, line_no); return DEFAULT;}
-cout 				{ report_token("KEYW", yytext, line_no); return COUT;}
+break 				{ report_token("KEYW", yytext, line_number); return BREAK;}
+continue			{ report_token("KEYW", yytext, line_number); return CONTINUE;}
+while				{ report_token("KEYW", yytext, line_number); return WHILE;}
+return				{ report_token("KEYW", yytext, line_number); return RETURN;}
+switch				{ report_token("KEYW", yytext, line_number); return SWITCH;}
+case				{ report_token("KEYW", yytext, line_number); return CASE;}
+default				{ report_token("KEYW", yytext, line_number); return DEFAULT;}
+cout 				{ report_token("KEYW", yytext, line_number); return COUT;}
 
 
-\+|\-|\*|\/|\%		{ fprintf(f_tokens,"<ARITH_OP, '%s', %d>\n",yytext,line_no); return yytext[0];}
-\= 					{ fprintf(f_tokens,"<ASSIGN, '%s', %d>\n",yytext,line_no); return yytext[0];}
+	/* ___ ARITHMETIC AND ASSIGNMENT OPERATORS __ */
+\+|\-|\*|\/|\%		{ report_token("ARITH_OP", yytext, line_number); return yytext[0];}
+\= 					{ report_token("ARITH_OP", yytext, line_number); return yytext[0];}
+
+	/* ___ RELATIONAL OPERATORS ___ */
+\< 					{ report_token("REL_OP", yytext, line_number); return LT;}
+\> 					{ report_token("REL_OP", yytext, line_number); return GT;}
+\<\= 				{ report_token("REL_OP", yytext, line_number); return LE;}
+\>\= 				{ report_token("REL_OP", yytext, line_number); return GE;}
+\=\= 				{ report_token("REL_OP", yytext, line_number); return EQ;}
+\!\= 				{ report_token("REL_OP", yytext, line_number); return NE;}	
+
+	/* ___ LOGICAL OPERATORS __ */
+\&\& 				{ report_token("LOG_OP", yytext, line_number); return AND;}
+\|\| 				{ report_token("LOG_OP", yytext, line_number); return OR;}
+\!	 				{ report_token("LOG_OP", yytext, line_number); return NOT;}
+
+	/* ___ BINARY OPERATORS __ */
+\^					{ report_token("BIN_OP", yytext, line_number); return B_XOR; }
+\~					{ report_token("BIN_OP", yytext, line_number); return B_NOT; }
+\&					{ report_token("BIN_OP", yytext, line_number); return B_AND; }
+\|					{ report_token("BIN_OP", yytext, line_number); return B_OR; }
+\<\<				{ report_token("BIN_OP", yytext, line_number); return B_LSHIFT; }
+\>\>				{ report_token("BIN_OP", yytext, line_number); return B_RSHIFT; }
+
+\(|\{|\[			{ report_token("SEP", yytext, line_number); return yytext[0];}
+\)|\}|\]			{ report_token("SEP", yytext, line_number); return yytext[0];}
+\;|\,|\:			{ report_token("SEP", yytext, line_number); return yytext[0];}
 
 
-\< 					{ report_token("REL_OP", yytext, line_no); return LT;}
-\> 					{ report_token("REL_OP", yytext, line_no); return GT;}
-\<\= 				{ report_token("REL_OP", yytext, line_no); return LE;}
-\>\= 				{ report_token("REL_OP", yytext, line_no); return GE;}
-\=\= 				{ report_token("REL_OP", yytext, line_no); return EQ;}
-\!\= 				{ report_token("REL_OP", yytext, line_no); return NE;}
+	/* ___ CONSTANTS ___ */
+true|TRUE				{ report_token("CONS", yytext, line_number); return BOOL_CONS;}
+false|FALSE				{ report_token("CONS", yytext, line_number); return BOOL_CONS;}
+
+{id}            		{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<ID, '%s', %d, %d>\n",yytext,scope,line_number); return ID;}
+{digits}        		{ yylval.ival=atoi(yytext); fprintf(f_tokens,"<CONS, 'INT', %d, %d>\n",yylval.ival,line_number); return INT_CONS;}
+{digits}{opFraction}	{ yylval.fval=atof(yytext); fprintf(f_tokens,"<CONS, 'FLOAT', %f, %d>\n",yylval.fval,line_number); return FLOAT_CONS;}
+\'{letter}\' 			{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<CONS, 'CHAR', %c, %d>\n",yylval.sval[1],line_number); return CHAR_CONS;}
+\".*\" 					{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<CONS, 'STRING', %s, %d>\n",yytext,line_number); return STRING_CONS;}
+{header}				{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<CONS, 'HEADER', %s, %d>\n",yytext,line_number); return HEADER;}
 
 
-\&\& 				{ report_token("LOG_OP", yytext, line_no); return AND;}
-\|\| 				{ report_token("LOG_OP", yytext, line_no); return OR;}
-\!	 				{ report_token("LOG_OP", yytext, line_no); return NOT;}
-
-
-\(|\{|\[			{ report_token("SEP", yytext, line_no); return yytext[0];}
-\)|\}|\]			{ report_token("SEP", yytext, line_no); return yytext[0];}
-\;|\,|\:			{ report_token("SEP", yytext, line_no); return yytext[0];}
-
-
-\<\< 				{ report_token("REDIR", yytext, line_no); return REDIR_OP_OUT;}
-\>\> 				{ report_token("REDIR", yytext, line_no); return REDIR_OP_IN;}
-
-true|TRUE				{ report_token("CONS", yytext, line_no); return BOOL_CONS;}
-false|FALSE				{ report_token("CONS", yytext, line_no); return BOOL_CONS;}
-
-{id}            		{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<ID, '%s', %d, %d>\n",yytext,scope,line_no); return ID;}
-{digits}        		{ yylval.ival=atoi(yytext); fprintf(f_tokens,"<CONS, 'INT', %d, %d>\n",yylval.ival,line_no); return INT_CONS;}
-{digits}{opFraction}	{ yylval.fval=atof(yytext); fprintf(f_tokens,"<CONS, 'FLOAT', %f, %d>\n",yylval.fval,line_no); return FLOAT_CONS;}
-\'{letter}\' 			{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<CONS, 'CHAR', %c, %d>\n",yylval.sval[1],line_no); return CHAR_CONS;}
-\".*\" 					{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<CONS, 'STRING', %s, %d>\n",yytext,line_no); return STRING_CONS;}
-{header}				{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<CONS, 'HEADER', %s, %d>\n",yytext,line_no); return HEADER;}
-
-
-[\n] { line_no++;}
+[\n] { line_number++;}
 [ |\t] ;
 .               		{ return ERR; }
 %%

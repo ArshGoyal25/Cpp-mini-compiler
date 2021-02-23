@@ -10,7 +10,22 @@ void yyerror(char *s);
     char *sval;
 }
 
+%left ','
+%right '='
+%left OR
+%left AND
+%left B_OR
+%left B_XOR
+%left B_AND
+%left EQ NE
+%left LT GT LE GE
+%left B_LSHIFT B_RSHIFT
+%left '+' '-'
+%left '*' '/' '%'
+%right NOT B_NOT
 
+
+%token PRE_DIR
 %token <sval> ID
 %token <ival> INT_CONS
 %token <fval> FLOAT_CONS
@@ -23,18 +38,16 @@ void yyerror(char *s);
 
 %token LT GT LE GE EQ NE
 %token AND OR NOT
-%token REDIR_OP_OUT REDIR_OP_IN
+%token B_AND B_OR B_NOT B_LSHIFT B_RSHIFT B_XOR
 
 %token ERR
 %%
 start           : header { printf("Program accepted\n"); YYACCEPT; }
-header          : include main 
+                ;
+header          : PRE_DIR header
                 | main
+                ;
 main	        : PRO_BEG left_brac_s right_brac_s left_brac_c compound_statement right_brac_c 
-                ;
-include         : '#' INCLUDE HEADER
-                | include '#' INCLUDE HEADER
-                ;
                 ;
 left_brac_s     : '('
                 | error { yyerror("Missing left bracet s\n");}
@@ -114,14 +127,14 @@ arit_expression         : value
                         | value '%' arit_expression                 
                         ;
 
-value               :   ID {printf("%s ,line : %d \n", $1, line_no);}
+value               :   ID {printf("%s ,line : %d \n", $1, line_number);}
                     |   INT_CONS 
                     |   FLOAT_CONS 
                     |   STRING_CONS
                     |   CHAR_CONS
                     ;
 
-print               : COUT REDIR_OP_OUT arit_expression
+print               : COUT B_LSHIFT arit_expression
 
 semi                :   ';'
                     |   error { yyerror("Missing semicolon");}
@@ -130,7 +143,7 @@ semi                :   ';'
 
 void yyerror(char *string)
 {
-	printf("At line no : %d\nError occured : %s\n",line_no,string);
+	printf("At line no : %d\nError occured : %s\n",line_number,string);
 }
 int main()
 {

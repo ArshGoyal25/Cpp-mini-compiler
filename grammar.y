@@ -134,7 +134,7 @@ void yyerror(char *string)
 }
 int main()
 {
-    yyin = fopen("input_file.txt","r");
+    yyin = fopen("input_file.cpp","r");
     f_tokens = fopen("tokens.txt","w");
 
     yyparse();

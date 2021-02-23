@@ -4,3 +4,4 @@ y.tab.h
 *.out
 tokens.txt
 *.cpp
+test.c

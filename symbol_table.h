@@ -24,3 +24,4 @@ void delete_symbol_table(int scope);
 
 int create_declaration_entry(int scope, char* name, int is_initialized, int line_number);
 int create_mention_entry(int scope, char* name, int line_number);
+void remove_symbol_table_entry(int scope);

@@ -21,6 +21,8 @@ char err_mes[100];
             yyerror(err_mes);                                                   \
         }
 
+#define SYM_TAB_DEL(scope) remove_symbol_table_entry(scope);
+
 %}
 %union {
     int ival;
@@ -79,10 +81,10 @@ left_brac_s     : '('
 right_brac_s    : ')'
                 | error { yyerror("Missing right bracet s\n");}
     		    ;
-left_brac_c     : '{'
+left_brac_c     : '{'   { ++scope; }
                 | error { yyerror("Missing left bracet c\n");}
     		    ;
-right_brac_c    : '}'
+right_brac_c    : '}'   { SYM_TAB_DEL(scope); --scope; }
                 | error { yyerror("Missing right bracet c\n");}
     		    ;
 

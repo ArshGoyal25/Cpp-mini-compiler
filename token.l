@@ -49,7 +49,6 @@ return				{ report_token("KEYW", yytext, line_number); return RETURN;}
 switch				{ report_token("KEYW", yytext, line_number); return SWITCH;}
 case				{ report_token("KEYW", yytext, line_number); return CASE;}
 default				{ report_token("KEYW", yytext, line_number); return DEFAULT;}
-cout 				{ report_token("KEYW", yytext, line_number); return COUT;}
 
 
 	/* ___ ARITHMETIC AND ASSIGNMENT OPERATORS __ */

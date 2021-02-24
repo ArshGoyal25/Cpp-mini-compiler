@@ -102,8 +102,8 @@ switch_statement        : SWITCH left_brac_s IDENT right_brac_s left_brac_c case
                         | SWITCH left_brac_s IDENT right_brac_s left_brac_c cases default right_brac_c
                         ;
 
-cases                   : CASE INT_CONS ':' expression semi BREAK semi
-                        | cases CASE INT_CONS ':' expression semi BREAK semi
+cases                   : CASE INT_CONS ':' compound_statement
+                        | cases CASE INT_CONS ':' compound_statement
                         ;
                     
 default                 : DEFAULT ':' expression semi BREAK semi;
@@ -142,6 +142,8 @@ bin_expression          :   B_NOT expression
                         |   expression B_XOR expression
                         |   expression B_AND expression
                         |   expression B_OR expression
+                        |   expression B_LSHIFT expression
+                        |   expression B_RSHIFT expression
                         ;
 
 logic_expression        :   NOT expression

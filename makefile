@@ -1,7 +1,7 @@
 LEX = lex
 YACC = yacc
 CC = gcc
-YFLAGS = -d
+YFLAGS = -d -v
 
 all: 
 	$(LEX) token.l

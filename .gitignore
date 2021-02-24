@@ -5,3 +5,4 @@ y.tab.h
 tokens.txt
 *.cpp
 test.c
+y.output

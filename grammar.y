@@ -11,6 +11,10 @@ void yyerror(char *s);
 }
 
 %left ','
+%right ASSIGN_B_AND ASSIGN_B_OR ASSIGN_B_XOR
+%right ASSIGN_B_LSHIFT ASSIGN_B_RSHIFT
+%right ASSIGN_MUL ASSIGN_DIV ASSIGN_MOD
+%right ASSIGN_ADD ASSIGN_SUB
 %right '='
 %left OR
 %left AND
@@ -26,7 +30,7 @@ void yyerror(char *s);
 
 
 %token PRE_DIR
-%token <sval> ID
+%token <sval> IDENT
 %token <ival> INT_CONS
 %token <fval> FLOAT_CONS
 %token <sval> STRING_CONS CHAR_CONS BOOL_CONS HEADER
@@ -39,6 +43,8 @@ void yyerror(char *s);
 %token LT GT LE GE EQ NE
 %token AND OR NOT
 %token B_AND B_OR B_NOT B_LSHIFT B_RSHIFT B_XOR
+%token ASSIGN_ADD ASSIGN_SUB ASSIGN_DIV ASSIGN_MUL ASSIGN_MOD
+%token ASSIGN_B_LSHIFT ASSIGN_B_RSHIFT ASSIGN_B_AND ASSIGN_B_OR ASSIGN_B_XOR
 
 %token ERR
 %%
@@ -66,33 +72,25 @@ compound_statement  : statement compound_statement
                     | statement
                     ;
 
-statement           : expression_statement
+statement           : expression semi
+                    | declaration semi
+                    | list_var semi
                     | if_statement
                     | loop_statement
                     | jump_statement semi
                     | switch_statement
                     ;
 
-expression_statement    : expression semi
-                        ;
 
-expression              : TYPE_SPEC declaration
-                        | ID '=' arit_expression
-                        | rel_expression
-                        | arit_expression
-                        | print
+declaration             : TYPE_SPEC list_var
                         ;
-declaration             : list_var
-                        | ID '=' arit_expression
-                        | ID '=' arit_expression declaration
-                        ;
-list_var                : ID | list_var ',' ID 
+list_var                : IDENT | IDENT '=' expression | IDENT ',' list_var | IDENT '=' expression ',' list_var
                         ;
 
 if_statement            : IF left_brac_s expression right_brac_s left_brac_c compound_statement right_brac_c
                         ;
 
-loop_statement          : WHILE left_brac_s rel_expression right_brac_s left_brac_c compound_statement right_brac_c
+loop_statement          : WHILE left_brac_s expression right_brac_s left_brac_c compound_statement right_brac_c
                         ;
 
 jump_statement          :   BREAK
@@ -100,8 +98,8 @@ jump_statement          :   BREAK
                         |   RETURN expression
                         ;
 
-switch_statement        : SWITCH left_brac_s ID right_brac_s left_brac_c cases right_brac_c
-                        | SWITCH left_brac_s ID right_brac_s left_brac_c cases default right_brac_c
+switch_statement        : SWITCH left_brac_s IDENT right_brac_s left_brac_c cases right_brac_c
+                        | SWITCH left_brac_s IDENT right_brac_s left_brac_c cases default right_brac_c
                         ;
 
 cases                   : CASE INT_CONS ':' expression semi BREAK semi
@@ -111,30 +109,45 @@ cases                   : CASE INT_CONS ':' expression semi BREAK semi
 default                 : DEFAULT ':' expression semi BREAK semi;
                         ;
 
-rel_expression          :   arit_expression LT arit_expression
-                        |   arit_expression GT arit_expression
-                        |   arit_expression LE arit_expression
-                        |   arit_expression GE arit_expression
-                        |   arit_expression EQ arit_expression 
-                        |   arit_expression NE arit_expression 
-                        ;
-
-arit_expression         : value
-                        | value '+' arit_expression
-                        | value '-' arit_expression
-                        | value '*' arit_expression
-                        | value '/' arit_expression       
-                        | value '%' arit_expression                 
-                        ;
-
-value               :   ID {printf("%s ,line : %d \n", $1, line_number);}
-                    |   INT_CONS 
+value               :   INT_CONS 
                     |   FLOAT_CONS 
                     |   STRING_CONS
                     |   CHAR_CONS
                     ;
 
-print               : COUT B_LSHIFT arit_expression
+expression              :   rel_expression
+                        |   bin_expression
+                        |   logic_expression
+                        |   arith_expression
+                        |   value
+                        |   IDENT
+                        ;
+
+rel_expression          :   expression LT expression
+                        |   expression GT expression
+                        |   expression LE expression
+                        |   expression GE expression
+                        |   expression EQ expression
+                        |   expression NE expression
+                        ;
+
+arith_expression        :   expression '+' expression
+                        |   expression '-' expression
+                        |   expression '*' expression
+                        |   expression '/' expression       
+                        |   expression '%' expression
+                        ;
+
+bin_expression          :   B_NOT expression
+                        |   expression B_XOR expression
+                        |   expression B_AND expression
+                        |   expression B_OR expression
+                        ;
+
+logic_expression        :   NOT expression
+                        |   expression AND expression
+                        |   expression OR expression
+
 
 semi                :   ';'
                     |   error { yyerror("Missing semicolon");}

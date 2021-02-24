@@ -54,7 +54,18 @@ cout 				{ report_token("KEYW", yytext, line_number); return COUT;}
 
 	/* ___ ARITHMETIC AND ASSIGNMENT OPERATORS __ */
 \+|\-|\*|\/|\%		{ report_token("ARITH_OP", yytext, line_number); return yytext[0];}
-\= 					{ report_token("ARITH_OP", yytext, line_number); return yytext[0];}
+\= 					{ report_token("ASSIGNMENT_OP", yytext, line_number); return yytext[0];}
+\+\=				{ report_token("ASSIGNMENT_OP", yytext, line_number); return ASSIGN_ADD;}
+\-\=				{ report_token("ASSIGNMENT_OP", yytext, line_number); return ASSIGN_SUB;}
+\/\=				{ report_token("ASSIGNMENT_OP", yytext, line_number); return ASSIGN_DIV;}
+\*\=				{ report_token("ASSIGNMENT_OP", yytext, line_number); return ASSIGN_MUL;}
+\%\=				{ report_token("ASSIGNMENT_OP", yytext, line_number); return ASSIGN_MOD;}
+\<\<\=				{ report_token("ASSIGNMENT_OP", yytext, line_number); return ASSIGN_B_LSHIFT;}
+\>\>\=				{ report_token("ASSIGNMENT_OP", yytext, line_number); return ASSIGN_B_RSHIFT;}
+\&\=				{ report_token("ASSIGNMENT_OP", yytext, line_number); return ASSIGN_B_AND;}
+\|\=				{ report_token("ASSIGNMENT_OP", yytext, line_number); return ASSIGN_B_OR;}
+\^\=				{ report_token("ASSIGNMENT_OP", yytext, line_number); return ASSIGN_B_XOR;}
+
 
 	/* ___ RELATIONAL OPERATORS ___ */
 \< 					{ report_token("REL_OP", yytext, line_number); return LT;}
@@ -86,7 +97,7 @@ cout 				{ report_token("KEYW", yytext, line_number); return COUT;}
 true|TRUE				{ report_token("CONS", yytext, line_number); return BOOL_CONS;}
 false|FALSE				{ report_token("CONS", yytext, line_number); return BOOL_CONS;}
 
-{id}            		{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<ID, '%s', %d, %d>\n",yytext,scope,line_number); return ID;}
+{id}            		{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<ID, '%s', %d, %d>\n",yytext,scope,line_number); return IDENT;}
 {digits}        		{ yylval.ival=atoi(yytext); fprintf(f_tokens,"<CONS, 'INT', %d, %d>\n",yylval.ival,line_number); return INT_CONS;}
 {digits}{opFraction}	{ yylval.fval=atof(yytext); fprintf(f_tokens,"<CONS, 'FLOAT', %f, %d>\n",yylval.fval,line_number); return FLOAT_CONS;}
 \'{letter}\' 			{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<CONS, 'CHAR', %c, %d>\n",yylval.sval[1],line_number); return CHAR_CONS;}

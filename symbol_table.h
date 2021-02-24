@@ -1,6 +1,7 @@
 typedef struct ident_node {
-	char name[33];
+	char name[33];	
 	char type;
+	int scope;
 	int line_number;
 	int storage;
 	int is_initialized;
@@ -21,5 +22,5 @@ void add_identifier(int scope, char* name, int is_initialized, int is_declared, 
 ident_node* find_declaration(int scope, char* name);
 void delete_symbol_table(int scope);
 
-int create_declaration(int scope, char* name, int is_initialized, int line_number);
-void test_me();
+int create_declaration_entry(int scope, char* name, int is_initialized, int line_number);
+int create_mention_entry(int scope, char* name, int line_number);

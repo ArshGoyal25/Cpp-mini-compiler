@@ -5,12 +5,13 @@
 
 symbol_table scope_table[100];
 
-ident_node* create_ident(char* name, int is_initialized, int is_declaration, int line_number, int declaration_line) {
+ident_node* create_ident(int scope, char* name, int is_initialized, int is_declaration, int line_number, int declaration_line) {
     ident_node* new_node = malloc(sizeof(ident_node));
     new_node -> is_initialized = is_initialized;    
     new_node -> is_declaration = is_declaration;
     new_node -> line_number = line_number;
     new_node -> declaration_line = declaration_line;
+    new_node -> scope = scope;
     strcpy(new_node -> name, name);
     return new_node;        
 }
@@ -18,7 +19,7 @@ ident_node* create_ident(char* name, int is_initialized, int is_declaration, int
 void add_identifier(int scope, char* name, int is_initialized, int is_declaration, int line_number, int declaration_line) {    
     if(scope < 0) return;
     ident_node* cur = scope_table[scope].entries;
-    ident_node* new_ident = create_ident(name, is_initialized, is_declaration, line_number, declaration_line);    
+    ident_node* new_ident = create_ident(scope, name, is_initialized, is_declaration, line_number, declaration_line);    
     if(!cur) {
         scope_table[scope].entries = new_ident;        
     } else {
@@ -60,11 +61,18 @@ ident_node* find_declaration(int scope, char* name) {
     return NULL;
 }
 
-int create_declaration(int scope, char* name, int is_initialized, int line_number) {
-    ident_node* prev_dec = find_declaration(scope, name);
-    if(prev_dec) {
+int create_declaration_entry(int scope, char* name, int is_initialized, int line_number) {    
+    ident_node* prev_dec = find_declaration(scope, name);    
+    if(prev_dec && prev_dec -> scope == scope) {    // If there was a previous declaration in the same scope    
         return prev_dec -> line_number;
-    }
+    }    
     add_identifier(scope, name, is_initialized, 1, line_number, line_number);    
+    return 0;
+}
+
+int create_mention_entry(int scope, char* name, int line_number) {
+    ident_node* prev_dec = find_declaration(scope, name);
+    if(!prev_dec) return 1; // If identifier has not been declared
+    add_identifier(scope, name, prev_dec -> is_initialized, 0, line_number, prev_dec -> line_number);
     return 0;
 }

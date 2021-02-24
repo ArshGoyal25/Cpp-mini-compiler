@@ -5,12 +5,20 @@
 int yylex();
 void yyerror(char *s);
 
+char err_mes[100];
+
 #define SYM_TAB_DECL(scope, name, is_initialized, line_number)                              \
-        int err = create_declaration(scope, name, is_initialized, line_number);             \
+        int err = create_declaration_entry(scope, name, is_initialized, line_number);       \
         if(err) {                                                                           \
-            char err_mes[100];                                                              \
             sprintf(err_mes, "%s already declared in line %d", name, err);                  \
             yyerror(err_mes);                                                               \
+        }
+
+#define SYM_TAB_ADD(scope, name, line_number)                                   \
+        int err = create_mention_entry(scope, name, line_number);               \
+        if(err) {                                                               \
+            sprintf(err_mes, "no declaration found for %s", name);              \
+            yyerror(err_mes);                                                   \
         }
 
 %}
@@ -95,16 +103,16 @@ statement           : expression semi
 declaration             : TYPE_SPEC list_var_declaration
                         ;
 
-list_var_declaration    : IDENT { SYM_TAB_DECL(scope, $1, 0, line_number); }
-                        | IDENT '=' expression { SYM_TAB_DECL(scope, $1, 1, line_number); }
-                        | IDENT ',' list_var_declaration { SYM_TAB_DECL(scope, $1, 0, line_number); }
+list_var_declaration    : IDENT                                         { SYM_TAB_DECL(scope, $1, 0, line_number); }
+                        | IDENT '=' expression                          { SYM_TAB_DECL(scope, $1, 1, line_number); }
+                        | IDENT ',' list_var_declaration                { SYM_TAB_DECL(scope, $1, 0, line_number); }
                         | IDENT '=' expression ',' list_var_declaration { SYM_TAB_DECL(scope, $1, 1, line_number); }
                         ;
 
-list_var                : IDENT
-                        | IDENT '=' expression 
-                        | IDENT ',' list_var 
-                        | IDENT '=' expression ',' list_var
+list_var                : IDENT                                 { SYM_TAB_ADD(scope, $1, line_number); }
+                        | IDENT '=' expression                  { SYM_TAB_ADD(scope, $1, line_number); }
+                        | IDENT ',' list_var                    { SYM_TAB_ADD(scope, $1, line_number); }
+                        | IDENT '=' expression ',' list_var     { SYM_TAB_ADD(scope, $1, line_number); }
                         ;
 
 if_statement            : IF left_brac_s expression right_brac_s left_brac_c compound_statement right_brac_c
@@ -140,7 +148,7 @@ expression              :   rel_expression
                         |   logic_expression
                         |   arith_expression
                         |   value
-                        |   IDENT
+                        |   IDENT   { SYM_TAB_ADD(scope, $1, line_number); }
                         ;
 
 rel_expression          :   expression LT expression

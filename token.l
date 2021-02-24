@@ -87,8 +87,10 @@ default				{ report_token("KEYW", yytext, line_number); return DEFAULT;}
 \<\<				{ report_token("BIN_OP", yytext, line_number); return B_LSHIFT; }
 \>\>				{ report_token("BIN_OP", yytext, line_number); return B_RSHIFT; }
 
-\(|\{|\[			{ report_token("SEP", yytext, line_number); return yytext[0];}
-\)|\}|\]			{ report_token("SEP", yytext, line_number); return yytext[0];}
+\(|\[				{ report_token("SEP", yytext, line_number); return yytext[0];}
+\)|\]				{ report_token("SEP", yytext, line_number); return yytext[0];}
+\{					{ report_token("SEP", yytext, line_number); ++scope; return yytext[0];}
+\}					{ report_token("SEP", yytext, line_number); --scope; return yytext[0];}
 \;|\,|\:			{ report_token("SEP", yytext, line_number); return yytext[0];}
 
 

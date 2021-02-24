@@ -1,8 +1,18 @@
 %{
 #include<stdio.h>
 #include"lex.yy.c"
+#include "symbol_table.h"
 int yylex();
 void yyerror(char *s);
+
+#define SYM_TAB_DECL(scope, name, is_initialized, line_number)                              \
+        int err = create_declaration(scope, name, is_initialized, line_number);             \
+        if(err) {                                                                           \
+            char err_mes[100];                                                              \
+            sprintf(err_mes, "%s already declared in line %d", name, err);                  \
+            yyerror(err_mes);                                                               \
+        }
+
 %}
 %union {
     int ival;
@@ -82,9 +92,19 @@ statement           : expression semi
                     ;
 
 
-declaration             : TYPE_SPEC list_var
+declaration             : TYPE_SPEC list_var_declaration
                         ;
-list_var                : IDENT | IDENT '=' expression | IDENT ',' list_var | IDENT '=' expression ',' list_var
+
+list_var_declaration    : IDENT { SYM_TAB_DECL(scope, $1, 0, line_number); }
+                        | IDENT '=' expression { SYM_TAB_DECL(scope, $1, 1, line_number); }
+                        | IDENT ',' list_var_declaration { SYM_TAB_DECL(scope, $1, 0, line_number); }
+                        | IDENT '=' expression ',' list_var_declaration { SYM_TAB_DECL(scope, $1, 1, line_number); }
+                        ;
+
+list_var                : IDENT
+                        | IDENT '=' expression 
+                        | IDENT ',' list_var 
+                        | IDENT '=' expression ',' list_var
                         ;
 
 if_statement            : IF left_brac_s expression right_brac_s left_brac_c compound_statement right_brac_c
@@ -156,12 +176,11 @@ semi                :   ';'
                     ;
 %%
 
-void yyerror(char *string)
-{
-	printf("At line no : %d\nError occured : %s\n",line_number,string);
+void yyerror(char *string) {
+	printf("Error occured (%d): %s\n", line_number, string);
 }
-int main()
-{
+
+int main() {
     yyin = fopen("input_file.cpp","r");
     f_tokens = fopen("tokens.txt","w");
 

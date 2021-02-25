@@ -30,13 +30,13 @@ void add_identifier(int scope, char* name, char* type, int is_initialized, int i
     }
 }
 
-void display_symbol_table(int scope) {
+void display_symbol_table(FILE* symbol_table_fp, int scope) {
     if(scope < 0 || scope > 100 ) return;
     ident_node* cur  = scope_table[scope].entries;
-    printf("\nName\t\t\tType\tLine\tDeclaration Line\tScope\n");
-    printf("----------------------------------------------------------------------\n");
+    fprintf(symbol_table_fp, "\nName\t\t\tType\tLine\tDeclaration Line\tScope\n");
+    fprintf(symbol_table_fp, "----------------------------------------------------------------------\n");
     while(cur) {
-        printf("%s\t\t\t%s\t%d\t%d\t\t\t%d\n", 
+        fprintf(symbol_table_fp, "%s\t\t\t%s\t%d\t%d\t\t\t%d\n", 
             cur -> name,
             cur -> type,
             cur -> line_number, 
@@ -87,7 +87,7 @@ int create_mention_entry(int scope, char* name, int line_number) {
     return 0;
 }
 
-void remove_symbol_table_entry(int scope) {
-    display_symbol_table(scope);
+void remove_symbol_table_entry(FILE* symbol_table_fp, int scope) {
+    display_symbol_table(symbol_table_fp, scope);
     delete_symbol_table(scope);
 }

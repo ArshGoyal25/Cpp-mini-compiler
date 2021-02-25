@@ -24,7 +24,7 @@ char type_spec_buffer[100];
 
 #define TYPE_SPEC_SAVE(type_spec) strcpy(type_spec_buffer, type_spec);
 
-#define SYM_TAB_DEL(scope) remove_symbol_table_entry(scope);
+#define SYM_TAB_DEL(scope) remove_symbol_table_entry(symbol_table_fp, scope);
 
 %}
 %union {
@@ -203,6 +203,7 @@ void yyerror(char *string) {
 int main() {
     yyin = fopen("input_file.cpp","r");
     f_tokens = fopen("tokens.txt","w");
+    symbol_table_fp = fopen("symbol_table.txt", "w");
 
     yyparse();
 

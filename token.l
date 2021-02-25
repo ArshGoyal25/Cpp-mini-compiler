@@ -12,6 +12,7 @@ int scope = 0;
 #define report_token(type, lexeme, line_number) fprintf(f_tokens, "<%s, '%s', %d>\n", type, lexeme, line_number);
 
 FILE *f_tokens;
+FILE* symbol_table_fp;
 
 %}
 

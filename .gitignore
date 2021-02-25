@@ -7,4 +7,5 @@ tokens.txt
 test.c
 y.output
 *.o
+*.txt
 miniCompiler

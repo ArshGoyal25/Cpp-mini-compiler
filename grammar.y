@@ -1,18 +1,29 @@
 %{
 #include<stdio.h>
+#include<string.h>
 #include"lex.yy.c"
 #include "symbol_table.h"
 int yylex();
 void yyerror(char *s);
 
-char err_mes[100];
+char err_mes[200];
 char type_spec_buffer[100];
+char identifier_buffer[100];
 
-#define SYM_TAB_DECL(scope, name, type_spec, is_initialized, line_number)                           \
-        int err = create_declaration_entry(scope, name, type_spec, is_initialized, line_number);    \
-        if(err) {                                                                                   \
-            sprintf(err_mes, "%s already declared in line %d", name, err);                          \
-            yyerror(err_mes);                                                                       \
+#define VALIDATE_IDENT_LEN(identifier)                                          \
+        strcpy(identifier_buffer, identifier);                                  \
+        if(strlen(identifier_buffer) > 31) {                                    \
+            sprintf(err_mes, "Identifier length too long: %s", identifier);     \
+            identifier_buffer[31] = 0;                                          \
+            yyerror(err_mes);                                                   \
+        }
+
+#define SYM_TAB_DECL(scope, name, type_spec, is_initialized, line_number)                                           \
+        VALIDATE_IDENT_LEN(name);                                                                                   \
+        int err = create_declaration_entry(scope, identifier_buffer, type_spec, is_initialized, line_number);       \
+        if(err) {                                                                                                   \
+            sprintf(err_mes, "%s already declared in line %d", identifier_buffer, err);                             \
+            yyerror(err_mes);                                                                                       \
         }
 
 #define SYM_TAB_ADD(scope, name, line_number)                                   \
@@ -123,14 +134,14 @@ list_var                : IDENT                                 { SYM_TAB_ADD(sc
 
 if_header               : IF left_brac_s expression right_brac_s { ++scope; }
 
-if_statement            : if_header '{' compound_statement '}' { --scope; }
-                        | if_header statement { --scope; }
+if_statement            : if_header '{' compound_statement '}' { SYM_TAB_DEL(scope); --scope; }
+                        | if_header statement { SYM_TAB_DEL(scope); --scope; }
                         ;
 
 while_header            : WHILE left_brac_s expression right_brac_s { ++scope; }
 
-loop_statement          : while_header '{' compound_statement '}' { --scope; }
-                        | while_header statement { --scope;}
+loop_statement          : while_header '{' compound_statement '}' { SYM_TAB_DEL(scope); --scope; }
+                        | while_header statement { SYM_TAB_DEL(scope); --scope;}
                         ;
 
 jump_statement          :   BREAK

@@ -6,12 +6,13 @@ int yylex();
 void yyerror(char *s);
 
 char err_mes[100];
+char type_spec_buffer[100];
 
-#define SYM_TAB_DECL(scope, name, is_initialized, line_number)                              \
-        int err = create_declaration_entry(scope, name, is_initialized, line_number);       \
-        if(err) {                                                                           \
-            sprintf(err_mes, "%s already declared in line %d", name, err);                  \
-            yyerror(err_mes);                                                               \
+#define SYM_TAB_DECL(scope, name, type_spec, is_initialized, line_number)                           \
+        int err = create_declaration_entry(scope, name, type_spec, is_initialized, line_number);    \
+        if(err) {                                                                                   \
+            sprintf(err_mes, "%s already declared in line %d", name, err);                          \
+            yyerror(err_mes);                                                                       \
         }
 
 #define SYM_TAB_ADD(scope, name, line_number)                                   \
@@ -20,6 +21,8 @@ char err_mes[100];
             sprintf(err_mes, "no declaration found for %s", name);              \
             yyerror(err_mes);                                                   \
         }
+
+#define TYPE_SPEC_SAVE(type_spec) strcpy(type_spec_buffer, type_spec);
 
 #define SYM_TAB_DEL(scope) remove_symbol_table_entry(scope);
 
@@ -53,9 +56,9 @@ char err_mes[100];
 %token <sval> IDENT
 %token <ival> INT_CONS
 %token <fval> FLOAT_CONS
-%token <sval> STRING_CONS CHAR_CONS BOOL_CONS HEADER
+%token <sval> STRING_CONS CHAR_CONS BOOL_CONS HEADER TYPE_SPEC
 
-%token TYPE_SPEC PRO_BEG
+%token PRO_BEG
 
 %token IF BREAK CONTINUE RETURN COUT INCLUDE
 %token WHILE SWITCH CASE DEFAULT
@@ -76,16 +79,16 @@ header          : PRE_DIR header
 main	        : PRO_BEG left_brac_s right_brac_s left_brac_c compound_statement right_brac_c 
                 ;
 left_brac_s     : '('
-                | error { yyerror("Missing left bracet s\n");}
+                | error { yyerror("Missing (\n");}
     		    ;
 right_brac_s    : ')'
-                | error { yyerror("Missing right bracet s\n");}
+                | error { yyerror("Missing )\n");}
     		    ;
 left_brac_c     : '{'   { ++scope; }
-                | error { yyerror("Missing left bracet c\n");}
+                | error { yyerror("Missing {\n");}
     		    ;
 right_brac_c    : '}'   { SYM_TAB_DEL(scope); --scope; }
-                | error { yyerror("Missing right bracet c\n");}
+                | error { yyerror("Missing }\n");}
     		    ;
 
 compound_statement  : statement compound_statement 
@@ -102,13 +105,14 @@ statement           : expression semi
                     ;
 
 
-declaration             : TYPE_SPEC list_var_declaration
+datatype                : TYPE_SPEC                                     { TYPE_SPEC_SAVE($1); }
+declaration             : datatype list_var_declaration
                         ;
 
-list_var_declaration    : IDENT                                         { SYM_TAB_DECL(scope, $1, 0, line_number); }
-                        | IDENT '=' expression                          { SYM_TAB_DECL(scope, $1, 1, line_number); }
-                        | IDENT ',' list_var_declaration                { SYM_TAB_DECL(scope, $1, 0, line_number); }
-                        | IDENT '=' expression ',' list_var_declaration { SYM_TAB_DECL(scope, $1, 1, line_number); }
+list_var_declaration    : IDENT                                         { SYM_TAB_DECL(scope, $1, type_spec_buffer, 0, line_number); }
+                        | IDENT '=' expression                          { SYM_TAB_DECL(scope, $1, type_spec_buffer, 1, line_number); }
+                        | IDENT ',' list_var_declaration                { SYM_TAB_DECL(scope, $1, type_spec_buffer, 0, line_number); }
+                        | IDENT '=' expression ',' list_var_declaration { SYM_TAB_DECL(scope, $1, type_spec_buffer, 1, line_number); }
                         ;
 
 list_var                : IDENT                                 { SYM_TAB_ADD(scope, $1, line_number); }
@@ -117,10 +121,16 @@ list_var                : IDENT                                 { SYM_TAB_ADD(sc
                         | IDENT '=' expression ',' list_var     { SYM_TAB_ADD(scope, $1, line_number); }
                         ;
 
-if_statement            : IF left_brac_s expression right_brac_s left_brac_c compound_statement right_brac_c
+if_header               : IF left_brac_s expression right_brac_s { ++scope; }
+
+if_statement            : if_header '{' compound_statement '}' { --scope; }
+                        | if_header statement { --scope; }
                         ;
 
-loop_statement          : WHILE left_brac_s expression right_brac_s left_brac_c compound_statement right_brac_c
+while_header            : WHILE left_brac_s expression right_brac_s { ++scope; }
+
+loop_statement          : while_header '{' compound_statement '}' { --scope; }
+                        | while_header statement { --scope;}
                         ;
 
 jump_statement          :   BREAK

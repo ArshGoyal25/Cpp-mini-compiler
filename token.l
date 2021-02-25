@@ -34,7 +34,7 @@ preprocess 			#(define|include<.+>)
 int[ ]main 			{ report_token("KEYW", "int", line_number); report_token("KEYW", "main", line_number); return PRO_BEG;}
 
 
-int|char|float|void|double|long[ ]+long { report_token("KEYW", yytext, line_number); return TYPE_SPEC;}
+int|char|float|void|double|long[ ]+long {yylval.sval = strdup(yytext); report_token("KEYW", yytext, line_number); return TYPE_SPEC;}
 
 	/* ___ PREPROCESS DIRECTIVE ___ */
 {preprocess}			{ return PRE_DIR; }

@@ -6,3 +6,5 @@ tokens.txt
 *.cpp
 test.c
 y.output
+*.o
+miniCompiler

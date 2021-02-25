@@ -1,7 +1,8 @@
 LEX = lex
 YACC = yacc
 CC = gcc
-YFLAGS = -d -v
+YFLAGS = -d
+DEBUG = -v
 
 all: mini_compiler
 
@@ -19,3 +20,6 @@ symbol_table.o: symbol_table.c
 
 y.tab.o: y.tab.c
 	gcc -c y.tab.c
+
+clean:
+	rm -rf *.o y.tab.c lex.yy.c miniCompiler y.tab.h y.output

@@ -120,7 +120,7 @@ datatype                : TYPE_SPEC                                     { TYPE_S
 declaration             : datatype list_var_declaration
                         ;
 
-list_var_declaration    : IDENT                                         { SYM_TAB_DECL(scope, $1, type_spec_buffer, 0, line_number); }
+list_var_declaration    : IDENT                                         { SYM_TAB_DECL(scope, $1, type_spec_buffer, 0, line_number); yyerror("Invalid\n");}
                         | IDENT '=' expression                          { SYM_TAB_DECL(scope, $1, type_spec_buffer, 1, line_number); }
                         | IDENT ',' list_var_declaration                { SYM_TAB_DECL(scope, $1, type_spec_buffer, 0, line_number); }
                         | IDENT '=' expression ',' list_var_declaration { SYM_TAB_DECL(scope, $1, type_spec_buffer, 1, line_number); }

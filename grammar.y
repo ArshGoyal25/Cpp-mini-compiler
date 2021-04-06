@@ -14,8 +14,10 @@ char identifier_buffer[100];
         strcpy(identifier_buffer, identifier);                                  \
         if(strlen(identifier_buffer) > 31) {                                    \
             sprintf(err_mes, "Identifier length too long: %s", identifier);     \
-            identifier_buffer[31] = 0;                                          \
             yyerror(err_mes);                                                   \
+            identifier_buffer[31] = 0;                                          \
+            sprintf(err_mes, "Identifier changed to : %s", identifier_buffer); \
+            yyerror(err_mes);                                                  \
         }
 
 #define SYM_TAB_DECL(scope, name, type_spec, is_initialized, line_number)                                           \
@@ -79,10 +81,11 @@ char identifier_buffer[100];
 %token B_AND B_OR B_NOT B_LSHIFT B_RSHIFT B_XOR
 %token ASSIGN_ADD ASSIGN_SUB ASSIGN_DIV ASSIGN_MUL ASSIGN_MOD
 %token ASSIGN_B_LSHIFT ASSIGN_B_RSHIFT ASSIGN_B_AND ASSIGN_B_OR ASSIGN_B_XOR
+%token INCREMENT DECREMENT
 
 %token ERR
 %%
-start           : header { printf("Program accepted\n"); YYACCEPT; }
+start           : header {printf("Program accepted\n"); }
                 ;
 header          : PRE_DIR header
                 | main
@@ -113,6 +116,7 @@ statement           : expression semi
                     | loop_statement
                     | jump_statement semi
                     | switch_statement
+                    | error {yyerror("Invalid statement") ;}
                     ;
 
 
@@ -120,7 +124,7 @@ datatype                : TYPE_SPEC                                     { TYPE_S
 declaration             : datatype list_var_declaration
                         ;
 
-list_var_declaration    : IDENT                                         { SYM_TAB_DECL(scope, $1, type_spec_buffer, 0, line_number); yyerror("Invalid\n");}
+list_var_declaration    : IDENT                                         { SYM_TAB_DECL(scope, $1, type_spec_buffer, 0, line_number); }
                         | IDENT '=' expression                          { SYM_TAB_DECL(scope, $1, type_spec_buffer, 1, line_number); }
                         | IDENT ',' list_var_declaration                { SYM_TAB_DECL(scope, $1, type_spec_buffer, 0, line_number); }
                         | IDENT '=' expression ',' list_var_declaration { SYM_TAB_DECL(scope, $1, type_spec_buffer, 1, line_number); }
@@ -160,6 +164,7 @@ cases                   : CASE INT_CONS ':' compound_statement
 default                 : DEFAULT ':' expression semi BREAK semi;
                         ;
 
+
 value               :   INT_CONS 
                     |   FLOAT_CONS 
                     |   STRING_CONS
@@ -170,6 +175,7 @@ expression              :   rel_expression
                         |   bin_expression
                         |   logic_expression
                         |   arith_expression
+                        |   inc_dec_expression
                         |   value
                         |   IDENT   { SYM_TAB_ADD(scope, $1, line_number); }
                         ;
@@ -201,6 +207,11 @@ logic_expression        :   NOT expression
                         |   expression AND expression
                         |   expression OR expression
 
+inc_dec_expression      : INCREMENT IDENT
+                        | DECREMENT IDENT
+                        | IDENT INCREMENT
+                        | IDENT DECREMENT
+                        ;
 
 semi                :   ';'
                     |   error { yyerror("Missing semicolon");}

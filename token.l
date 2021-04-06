@@ -6,6 +6,7 @@
 
 extern YYSTYPE yylval;
 
+char err_mes[200];
 int line_number = 1;
 int line_of_declaration = 0;
 int scope = 0;
@@ -25,11 +26,12 @@ opFraction  		(\.{digits})?
 opExponent  		([Ee][+-]?{digits})?
 number      		{digits}{opFraction}{opExponent}
 preprocess 			#(define|include<.+>)
+special				[!@#$%^&*.:;_]
 
 %%
 
 	/* comments and white spaces */
-([ ]*|(\n\t)*|(\n)*|(\t)*)*\/\/.* 
+([ ]*|(\n\t)*|(\n)*|(\t)*)*\/\/.* { line_number++;}
 ([ ]*|(\n\t)*|(\n)*|(\t)*)*\/\*(.*\n)*.*\*\/ 
 
 int[ ]main 			{ report_token("KEYW", "int", line_number); report_token("KEYW", "main", line_number); return PRO_BEG;}
@@ -66,6 +68,9 @@ default				{ report_token("KEYW", yytext, line_number); return DEFAULT;}
 \|\=				{ report_token("ASSIGNMENT_OP", yytext, line_number); return ASSIGN_B_OR;}
 \^\=				{ report_token("ASSIGNMENT_OP", yytext, line_number); return ASSIGN_B_XOR;}
 
+	/* ___ INCREMENT AND DECREMENT OPERATORS __ */
+\+\+				{ report_token("INCREMENT_OP", yytext, line_number); return INCREMENT;}
+\-\-				{ report_token("DECREMENT_OP", yytext, line_number); return DECREMENT;}
 
 	/* ___ RELATIONAL OPERATORS ___ */
 \< 					{ report_token("REL_OP", yytext, line_number); return LT;}
@@ -96,7 +101,7 @@ default				{ report_token("KEYW", yytext, line_number); return DEFAULT;}
 	/* ___ CONSTANTS ___ */
 true|TRUE				{ report_token("CONS", yytext, line_number); return BOOL_CONS;}
 false|FALSE				{ report_token("CONS", yytext, line_number); return BOOL_CONS;}
-
+{digits}{id}			{ sprintf(err_mes, "Invalid String: %s", yytext); yyerror(err_mes);}
 {id}            		{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<ID, '%s', %d, %d>\n",yytext,scope,line_number); return IDENT;}
 {digits}        		{ yylval.ival=atoi(yytext); fprintf(f_tokens,"<CONS, 'INT', %d, %d>\n",yylval.ival,line_number); return INT_CONS;}
 {digits}{opFraction}	{ yylval.fval=atof(yytext); fprintf(f_tokens,"<CONS, 'FLOAT', %f, %d>\n",yylval.fval,line_number); return FLOAT_CONS;}
@@ -104,10 +109,12 @@ false|FALSE				{ report_token("CONS", yytext, line_number); return BOOL_CONS;}
 \".*\" 					{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<CONS, 'STRING', %s, %d>\n",yytext,line_number); return STRING_CONS;}
 {header}				{ yylval.sval=strdup(yytext); fprintf(f_tokens,"<CONS, 'HEADER', %s, %d>\n",yytext,line_number); return HEADER;}
 
+{special}{letter}+		{yyerror("Improper string");printf("%s\n",yytext);} 
 
-[\n] { line_number++;}
+
+[\n] 					{ line_number++;}
 [ |\t] ;
-.               		{ yyerror("invalid") ;}
+.	              		{ yyerror("invalid") ;  }
 %%
 
 int yywrap()

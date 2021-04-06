@@ -10,7 +10,7 @@ int line_number = 1;
 int line_of_declaration = 0;
 int scope = 0;
 #define report_token(type, lexeme, line_number) fprintf(f_tokens, "<%s, '%s', %d>\n", type, lexeme, line_number);
-
+void yyerror(char *);
 FILE *f_tokens;
 FILE* symbol_table_fp;
 
@@ -107,8 +107,9 @@ false|FALSE				{ report_token("CONS", yytext, line_number); return BOOL_CONS;}
 
 [\n] { line_number++;}
 [ |\t] ;
-.               		{ return ERR; }
+.               		{ yyerror("invalid") ;}
 %%
+
 int yywrap()
 {
 	return 1;

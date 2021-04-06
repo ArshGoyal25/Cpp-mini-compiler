@@ -6,6 +6,9 @@
 int yylex();
 void yyerror(char *s);
 
+char lhs[20];
+char value[20];
+char var[120] ;
 char err_mes[200];
 char type_spec_buffer[100];
 char identifier_buffer[100];
@@ -20,16 +23,16 @@ char identifier_buffer[100];
             yyerror(err_mes);                                                  \
         }
 
-#define SYM_TAB_DECL(scope, name, type_spec, is_initialized, line_number)                                           \
+#define SYM_TAB_DECL(scope, name, type_spec, is_initialized, value, line_number)                                           \
         VALIDATE_IDENT_LEN(name);                                                                                   \
-        int err = create_declaration_entry(scope, identifier_buffer, type_spec, is_initialized, line_number);       \
+        int err = create_declaration_entry(scope, identifier_buffer, type_spec, is_initialized, value, line_number);       \
         if(err) {                                                                                                   \
             sprintf(err_mes, "%s already declared in line %d", identifier_buffer, err);                             \
             yyerror(err_mes);                                                                                       \
         }
 
-#define SYM_TAB_ADD(scope, name, line_number)                                   \
-        int err = create_mention_entry(scope, name, line_number);               \
+#define SYM_TAB_ADD(scope, name, value, line_number)                                   \
+        int err = create_mention_entry(scope, name, value, line_number);               \
         if(err) {                                                               \
             sprintf(err_mes, "no declaration found for %s", name);              \
             yyerror(err_mes);                                                   \
@@ -38,6 +41,12 @@ char identifier_buffer[100];
 #define TYPE_SPEC_SAVE(type_spec) strcpy(type_spec_buffer, type_spec);
 
 #define SYM_TAB_DEL(scope) remove_symbol_table_entry(symbol_table_fp, scope);
+
+#define GET_VALUE(scope,name)                                                     \
+        char res[20];                                                              \
+        get_ident_value(scope,name,res);                                          \
+        strcpy(value,res);
+
 
 %}
 %union {
@@ -77,13 +86,16 @@ char identifier_buffer[100];
 %token WHILE SWITCH CASE DEFAULT
 
 %token LT GT LE GE EQ NE
-%token AND OR NOT
-%token B_AND B_OR B_NOT B_LSHIFT B_RSHIFT B_XOR
+%token <sval> AND OR NOT
+%token <sval> B_AND B_OR B_NOT B_LSHIFT B_RSHIFT B_XOR
 %token ASSIGN_ADD ASSIGN_SUB ASSIGN_DIV ASSIGN_MUL ASSIGN_MOD
 %token ASSIGN_B_LSHIFT ASSIGN_B_RSHIFT ASSIGN_B_AND ASSIGN_B_OR ASSIGN_B_XOR
-%token INCREMENT DECREMENT
+%token <sval> INCREMENT DECREMENT
 
 %token ERR
+
+
+%type <sval> value expression rel_expression bin_expression logic_expression arith_expression inc_dec_expression
 %%
 start           : header {printf("Program accepted\n"); }
                 ;
@@ -120,20 +132,31 @@ statement           : expression semi
                     ;
 
 
-datatype                : TYPE_SPEC                                     { TYPE_SPEC_SAVE($1); }
+datatype                : TYPE_SPEC                                             { TYPE_SPEC_SAVE($1); }
+                        ;
 declaration             : datatype list_var_declaration
+                        | datatype array_declaration
                         ;
 
-list_var_declaration    : IDENT                                         { SYM_TAB_DECL(scope, $1, type_spec_buffer, 0, line_number); }
-                        | IDENT '=' expression                          { SYM_TAB_DECL(scope, $1, type_spec_buffer, 1, line_number); }
-                        | IDENT ',' list_var_declaration                { SYM_TAB_DECL(scope, $1, type_spec_buffer, 0, line_number); }
-                        | IDENT '=' expression ',' list_var_declaration { SYM_TAB_DECL(scope, $1, type_spec_buffer, 1, line_number); }
+array_declaration       : IDENT '[' ']' '=' '{' list_value '}'                    { sprintf(var, "%s array", type_spec_buffer);  SYM_TAB_DECL(scope, $1, var, 1, "None", line_number); }
+                        | IDENT '[' expression ']'                                { sprintf(var, "%s array", type_spec_buffer);  SYM_TAB_DECL(scope, $1, var, 0, "None", line_number); }
+                        | IDENT '['expression ']' '=' '{' list_value '}'          { sprintf(var, "%s array", type_spec_buffer);  SYM_TAB_DECL(scope, $1, var, 1, "None", line_number); }
                         ;
 
-list_var                : IDENT                                 { SYM_TAB_ADD(scope, $1, line_number); }
-                        | IDENT '=' expression                  { SYM_TAB_ADD(scope, $1, line_number); }
-                        | IDENT ',' list_var                    { SYM_TAB_ADD(scope, $1, line_number); }
-                        | IDENT '=' expression ',' list_var     { SYM_TAB_ADD(scope, $1, line_number); }
+list_value              : value ',' list_value
+                        | value
+                        ;          
+
+list_var_declaration    : IDENT                                         { SYM_TAB_DECL(scope, $1, type_spec_buffer, 0, "None", line_number); }
+                        | IDENT '=' expression                          { SYM_TAB_DECL(scope, $1, type_spec_buffer, 1, $3 , line_number);}
+                        | IDENT ',' list_var_declaration                { SYM_TAB_DECL(scope, $1, type_spec_buffer, 0, "None" ,line_number); }
+                        | IDENT '=' expression                          { SYM_TAB_DECL(scope, $1, type_spec_buffer, 1, $3 , line_number);}           ',' list_var_declaration 
+                        ;
+
+list_var                : IDENT                                 { SYM_TAB_ADD(scope, $1, "None", line_number); }
+                        | IDENT '=' expression                  { SYM_TAB_ADD(scope, $1, $3, line_number); printf("DEC %s\n",$3);}
+                        | IDENT ',' list_var                    { SYM_TAB_ADD(scope, $1, "None" ,line_number); }
+                        | IDENT '=' expression                  { SYM_TAB_ADD(scope, $1,$3, line_number);}              ',' list_var     
                         ;
 
 if_header               : IF left_brac_s expression right_brac_s { ++scope; }
@@ -165,19 +188,19 @@ default                 : DEFAULT ':' expression semi BREAK semi;
                         ;
 
 
-value               :   INT_CONS 
-                    |   FLOAT_CONS 
-                    |   STRING_CONS
-                    |   CHAR_CONS
+value               :   INT_CONS    {sprintf(var,"%d", $1); $$ = var;}
+                    |   FLOAT_CONS  {sprintf(var,"%f", $1); $$ = var;}
+                    |   STRING_CONS {printf(var,"%s", $1); $$ = var;}
+                    |   CHAR_CONS   {sprintf(var,"%s", $1); $$ = var;}
                     ;
 
 expression              :   rel_expression
                         |   bin_expression
                         |   logic_expression
-                        |   arith_expression
-                        |   inc_dec_expression
-                        |   value
-                        |   IDENT   { SYM_TAB_ADD(scope, $1, line_number); }
+                        |   arith_expression                    {$$ = $1;}
+                        |   inc_dec_expression          
+                        |   value                               {char var[20] ; sprintf(var,"%s", $1); $$ = $1;}
+                        |   IDENT                               {GET_VALUE(scope,$1); SYM_TAB_ADD(scope, $1, value ,line_number); $$ = value;}
                         ;
 
 rel_expression          :   expression LT expression
@@ -188,11 +211,11 @@ rel_expression          :   expression LT expression
                         |   expression NE expression
                         ;
 
-arith_expression        :   expression '+' expression
-                        |   expression '-' expression
-                        |   expression '*' expression
-                        |   expression '/' expression       
-                        |   expression '%' expression
+arith_expression        :   expression              {strcpy(lhs,$1); }      '+' expression          { int res = atoi(lhs) + atoi($4); sprintf(var, "%d",res); $$ = var;}
+                        |   expression              {strcpy(lhs,$1); }      '-' expression          { int res = atoi(lhs) - atoi($4); sprintf(var, "%d",res); $$ = var;}
+                        |   expression              {strcpy(lhs,$1); }      '*' expression          { int res = atoi(lhs) * atoi($4); sprintf(var, "%d",res); $$ = var;}
+                        |   expression              {strcpy(lhs,$1); }      '/' expression          { int res = atoi(lhs) / atoi($4); sprintf(var, "%d",res); $$ = var;}    
+                        |   expression              {strcpy(lhs,$1); }      '%' expression          { int res = atoi(lhs) % atoi($4); sprintf(var, "%d",res); $$ = var;}
                         ;
 
 bin_expression          :   B_NOT expression

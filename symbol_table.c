@@ -5,7 +5,7 @@
 
 symbol_table scope_table[100];
 
-ident_node* create_ident(int scope, char* name, char* type, int is_initialized, int is_declaration, int line_number, int declaration_line) {
+ident_node* create_ident(int scope, char* name, char* type, int is_initialized, int is_declaration, char* value, int line_number, int declaration_line) {
     ident_node* new_node = malloc(sizeof(ident_node));
     new_node -> is_initialized = is_initialized;    
     new_node -> is_declaration = is_declaration;
@@ -13,15 +13,16 @@ ident_node* create_ident(int scope, char* name, char* type, int is_initialized, 
     new_node -> declaration_line = declaration_line;
     new_node -> scope = scope;
     new_node -> next = NULL;
+    strcpy(new_node -> val_string, value);
     strcpy(new_node -> type, type);
     strcpy(new_node -> name, name);
     return new_node;        
 }
 
-void add_identifier(int scope, char* name, char* type, int is_initialized, int is_declaration, int line_number, int declaration_line) {    
+void add_identifier(int scope, char* name, char* type, int is_initialized, int is_declaration, char* value, int line_number, int declaration_line) {    
     if(scope < 0) return;
     ident_node* cur = scope_table[scope].entries;
-    ident_node* new_ident = create_ident(scope, name, type, is_initialized, is_declaration, line_number, declaration_line);
+    ident_node* new_ident = create_ident(scope, name, type, is_initialized, is_declaration, value, line_number, declaration_line);
     if(!cur) {
         scope_table[scope].entries = new_ident;        
     } else {
@@ -33,12 +34,13 @@ void add_identifier(int scope, char* name, char* type, int is_initialized, int i
 void display_symbol_table(FILE* symbol_table_fp, int scope) {
     if(scope < 0 || scope > 100 ) return;
     ident_node* cur  = scope_table[scope].entries;
-    fprintf(symbol_table_fp, "\nName\t\t\t\tType\t\tLine\tDeclaration Line\tScope\n");
+    fprintf(symbol_table_fp, "\nName\t\t\t\tType\t\tValue\t\tLine\tDeclaration Line\tScope\n");
     fprintf(symbol_table_fp, "----------------------------------------------------------------------\n");
     while(cur) {
-        fprintf(symbol_table_fp, "%s\t\t\t\t\t%s\t\t\t%d\t\t%d\t\t\t\t\t%d\n", 
+        fprintf(symbol_table_fp, "%s\t\t\t\t\t%s\t\t\t%s\t\t\t%d\t\t%d\t\t\t\t\t%d\n", 
             cur -> name,
             cur -> type,
+            cur -> val_string,
             cur -> line_number, 
             cur -> declaration_line,
             cur -> scope
@@ -71,20 +73,47 @@ ident_node* find_declaration(int scope, char* name) {
     return NULL;
 }
 
-int create_declaration_entry(int scope, char* name, char* type, int is_initialized, int line_number) {
+int create_declaration_entry(int scope, char* name, char* type, int is_initialized, char* value, int line_number) {
     ident_node* prev_dec = find_declaration(scope, name);    
     if(prev_dec && prev_dec -> scope == scope) {    // If there was a previous declaration in the same scope    
         return prev_dec -> line_number;
     }    
-    add_identifier(scope, name, type, is_initialized, 1, line_number, line_number);    
+    add_identifier(scope, name, type, is_initialized, 1, value, line_number, line_number);    
     return 0;
 }
 
-int create_mention_entry(int scope, char* name, int line_number) {
+int create_mention_entry(int scope, char* name,char* value, int line_number) {
     ident_node* prev_dec = find_declaration(scope, name);
     if(!prev_dec) return 1; // If identifier has not been declared
-    add_identifier(scope, name, prev_dec -> type, prev_dec -> is_initialized, 0, line_number, prev_dec -> line_number);
+    add_identifier(scope, name, prev_dec -> type, prev_dec -> is_initialized, 0, value , line_number, prev_dec -> line_number);
     return 0;
+}
+
+
+void find_prev_entry(int scope, char* name, char* value) {
+    
+    while(scope) {
+        ident_node* cur = scope_table[scope].entries;
+        //char res[200] = "None";
+        while(cur) {
+            if(strcmp(cur -> name, name) == 0 ) {
+                strcpy(value, cur->val_string);
+                //printf("%s\n",value);
+            }                
+            cur = cur -> next;
+        }
+        //printf("%s\n", res);
+        if(strcmp(value,"None") != 0){
+            return ;
+        } 
+        --scope;
+    }
+}
+
+void get_ident_value(int scope, char* name, char* value) {
+    //char value[20];
+    find_prev_entry(scope, name,value);
+    //printf("%s\n",value);
 }
 
 void remove_symbol_table_entry(FILE* symbol_table_fp, int scope) {

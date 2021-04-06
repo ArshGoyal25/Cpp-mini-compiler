@@ -26,7 +26,7 @@ opFraction  		(\.{digits})?
 opExponent  		([Ee][+-]?{digits})?
 number      		{digits}{opFraction}{opExponent}
 preprocess 			#(define|include<.+>)
-special				[!@#$%^&*.:;_]
+special				[!@#$^&.:;_]
 
 %%
 

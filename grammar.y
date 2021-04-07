@@ -41,22 +41,9 @@ char identifier_buffer[100];
 
 #define SYM_TAB_DEL(scope) remove_symbol_table_entry(symbol_table_fp, scope);
 
-char* GET_VALUE(int scope,char* name){
-        char * ans = (char*)(malloc(sizeof(char)*20)); 
-        strcpy(ans,"None");
-        get_ident_value(scope,name,ans);
-        //printf("%s\n",ans);                                          
-        return ans;
-}                                             
+char* GET_VALUE(int scope,char* name);
+int find_val(char* name);
 
-int find_val(char* name){
-    int ans;
-    if (strcmp(GET_VALUE(scope,name),"None") == 0) 
-        ans = atoi(name) ;
-    else 
-        ans =  atoi(GET_VALUE(scope,name));  
-    return ans;
-}
 
 
 
@@ -165,10 +152,10 @@ list_var_declaration    : IDENT                                         { SYM_TA
                         | IDENT '=' expression                          { SYM_TAB_DECL(scope, $1, type_spec_buffer, 1, $3 , line_number);}           ',' list_var_declaration 
                         ;
 
-list_var                : IDENT                                 { SYM_TAB_ADD(scope, $1, "None", line_number); }
-                        | IDENT '=' expression                  { SYM_TAB_ADD(scope, $1, $3, line_number); printf("DEC %s\n",$3);}
-                        | IDENT ',' list_var                    { SYM_TAB_ADD(scope, $1, "None" ,line_number); }
-                        | IDENT '=' expression                  { SYM_TAB_ADD(scope, $1,$3, line_number);}              ',' list_var     
+list_var                : IDENT                                 { SYM_TAB_ADD(scope, $1, GET_VALUE(scope,$1), line_number); }
+                        | IDENT '=' expression                  { SYM_TAB_ADD(scope, $1, $3, line_number);}
+                        | IDENT ',' list_var                    { SYM_TAB_ADD(scope, $1, GET_VALUE(scope,$1) ,line_number); }
+                        | IDENT '=' expression                  { SYM_TAB_ADD(scope, $1, $3, line_number);}              ',' list_var     
                         ;
 
 if_header               : IF left_brac_s expression right_brac_s { ++scope; }
@@ -188,8 +175,8 @@ jump_statement          :   BREAK
                         |   RETURN expression
                         ;
 
-switch_statement        : SWITCH left_brac_s IDENT right_brac_s left_brac_c cases right_brac_c
-                        | SWITCH left_brac_s IDENT right_brac_s left_brac_c cases default right_brac_c
+switch_statement        : SWITCH left_brac_s IDENT right_brac_s left_brac_c cases right_brac_c              { SYM_TAB_ADD(scope, $3, GET_VALUE(scope,$3), line_number);}
+                        | SWITCH left_brac_s IDENT right_brac_s left_brac_c cases default right_brac_c      { SYM_TAB_ADD(scope, $3, GET_VALUE(scope,$3), line_number);}
                         ;
 
 cases                   : CASE INT_CONS ':' compound_statement
@@ -212,7 +199,7 @@ expression              :   rel_expression
                         |   arith_expression                    
                         |   inc_dec_expression          
                         |   value                               
-                        |   IDENT                               
+                        |   IDENT                                    {SYM_TAB_ADD(scope, $1, GET_VALUE(scope,$1), line_number); }                             
                         ;
 
 rel_expression          :   expression LT expression
@@ -251,10 +238,10 @@ logic_expression        :   NOT expression
                         |   expression AND expression
                         |   expression OR expression
 
-inc_dec_expression      : INCREMENT IDENT
-                        | DECREMENT IDENT
-                        | IDENT INCREMENT
-                        | IDENT DECREMENT
+inc_dec_expression      : INCREMENT IDENT                               { int temp = find_val($2) ; temp +=1 ; char res[20];  sprintf(res,"%d", temp); SYM_TAB_ADD(scope, $1, res, line_number);}
+                        | DECREMENT IDENT                               { int temp = find_val($2) ; temp -=1 ; char res[20];  sprintf(res,"%d", temp); SYM_TAB_ADD(scope, $1, res, line_number);}
+                        | IDENT INCREMENT                               { int temp = find_val($1) ; temp +=1 ; char res[20];  sprintf(res,"%d", temp); SYM_TAB_ADD(scope, $1, res, line_number);}
+                        | IDENT DECREMENT                               { int temp = find_val($2) ; temp -=1 ; char res[20];  sprintf(res,"%d", temp); SYM_TAB_ADD(scope, $1, res, line_number);}
                         ;
 
 semi                :   ';'
@@ -275,5 +262,23 @@ int main() {
 
     fclose(f_tokens);
     return 0;
+}
+
+
+char* GET_VALUE(int scope,char* name){
+        char * ans = (char*)(malloc(sizeof(char)*20)); 
+        strcpy(ans,"None");
+        get_ident_value(scope,name,ans);
+        //printf("%s\n",ans);                                          
+        return ans;
+}
+
+int find_val(char* name){
+    int ans;
+    if (strcmp(GET_VALUE(scope,name),"None") == 0) 
+        ans = atoi(name) ;
+    else 
+        ans =  atoi(GET_VALUE(scope,name));  
+    return ans;
 }
 

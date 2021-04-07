@@ -9,3 +9,4 @@ y.output
 *.o
 *.txt
 miniCompiler
+extra.txt

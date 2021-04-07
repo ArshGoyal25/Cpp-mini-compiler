@@ -113,7 +113,6 @@ void find_prev_entry(int scope, char* name, char* value) {
 void get_ident_value(int scope, char* name, char* value) {
     //char value[20];
     find_prev_entry(scope, name,value);
-    //printf("%s\n",value);
 }
 
 void remove_symbol_table_entry(FILE* symbol_table_fp, int scope) {

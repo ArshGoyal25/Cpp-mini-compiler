@@ -6,7 +6,6 @@
 int yylex();
 void yyerror(char *s);
 
-char lhs[20];
 char value[20];
 char var[120] ;
 char err_mes[200];
@@ -42,10 +41,23 @@ char identifier_buffer[100];
 
 #define SYM_TAB_DEL(scope) remove_symbol_table_entry(symbol_table_fp, scope);
 
-#define GET_VALUE(scope,name)                                                     \
-        char res[20];                                                              \
-        get_ident_value(scope,name,res);                                          \
-        strcpy(value,res);
+char* GET_VALUE(int scope,char* name){
+        char * ans = (char*)(malloc(sizeof(char)*20)); 
+        strcpy(ans,"None");
+        get_ident_value(scope,name,ans);
+        //printf("%s\n",ans);                                          
+        return ans;
+}                                             
+
+int find_val(char* name){
+    int ans;
+    if (strcmp(GET_VALUE(scope,name),"None") == 0) 
+        ans = atoi(name) ;
+    else 
+        ans =  atoi(GET_VALUE(scope,name));  
+    return ans;
+}
+
 
 
 %}
@@ -197,10 +209,10 @@ value               :   INT_CONS    {sprintf(var,"%d", $1); $$ = var;}
 expression              :   rel_expression
                         |   bin_expression
                         |   logic_expression
-                        |   arith_expression                    {$$ = $1;}
+                        |   arith_expression                    
                         |   inc_dec_expression          
-                        |   value                               {char var[20] ; sprintf(var,"%s", $1); $$ = $1;}
-                        |   IDENT                               {GET_VALUE(scope,$1); SYM_TAB_ADD(scope, $1, value ,line_number); $$ = value;}
+                        |   value                               
+                        |   IDENT                               
                         ;
 
 rel_expression          :   expression LT expression
@@ -211,11 +223,20 @@ rel_expression          :   expression LT expression
                         |   expression NE expression
                         ;
 
-arith_expression        :   expression              {strcpy(lhs,$1); }      '+' expression          { int res = atoi(lhs) + atoi($4); sprintf(var, "%d",res); $$ = var;}
-                        |   expression              {strcpy(lhs,$1); }      '-' expression          { int res = atoi(lhs) - atoi($4); sprintf(var, "%d",res); $$ = var;}
-                        |   expression              {strcpy(lhs,$1); }      '*' expression          { int res = atoi(lhs) * atoi($4); sprintf(var, "%d",res); $$ = var;}
-                        |   expression              {strcpy(lhs,$1); }      '/' expression          { int res = atoi(lhs) / atoi($4); sprintf(var, "%d",res); $$ = var;}    
-                        |   expression              {strcpy(lhs,$1); }      '%' expression          { int res = atoi(lhs) % atoi($4); sprintf(var, "%d",res); $$ = var;}
+arith_expression        :   expression '+' expression               {int temp1 = find_val($1) ; int temp2 = find_val($3); int temp = temp1 + temp2 ;  
+                                                                    char res[20];  sprintf(res,"%d", temp);  $$ = res; }     
+
+                        |   expression '-' expression               {int temp1 = find_val($1) ; int temp2 = find_val($3); int temp = temp1 - temp2 ; 
+                                                                    char res[20];  sprintf(res,"%d", temp);  $$ = res; } 
+
+                        |   expression '/' expression               {int temp1 = find_val($1) ; int temp2 = find_val($3); int temp = temp1 / temp2 ; 
+                                                                    char res[20];  sprintf(res,"%d", temp);  $$ = res; }  
+
+                        |   expression '*' expression               {int temp1 = find_val($1) ; int temp2 = find_val($3); int temp = temp1 * temp2 ; 
+                                                                    char res[20];  sprintf(res,"%d", temp);  $$ = res; }  
+
+                        |   expression '%' expression               {int temp1 = find_val($1) ; int temp2 = find_val($3); int temp = temp1 % temp2 ; 
+                                                                    char res[20];  sprintf(res,"%d", temp);  $$ = res; }   
                         ;
 
 bin_expression          :   B_NOT expression

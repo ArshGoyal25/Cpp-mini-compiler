@@ -6,7 +6,7 @@
 int yylex();
 void yyerror(char *s);
 
-char value[20];
+char value[30];
 char var[120] ;
 char err_mes[200];
 char err1[50];
@@ -24,47 +24,56 @@ int type;
             yyerror(err_mes);                                                  \
         }
 
+#define PRINT_TYPE_ERROR(value,expected,actual)                                                 \
+    sprintf(err1, "Implicit Type-Casting done.");                                               \
+    sprintf(err_mes, "Invalid Type for %s. Expected %s, got %s." , identifier_buffer,expected,actual);  \
+    yyerror(err_mes);                                                                           \
+    sprintf(err_mes, "%s New Value for %s : %s",err1,identifier_buffer,value);                  \
+    yyerror(err_mes);                                                                           
+
 
 #define CHECK_TYPE(type_spec, value, flag)                                                              \
         if(strcmp(type_spec,"int") == 0){                                                               \
             switch(type){                                                                               \
-                case 1 :  sprintf(value,"%d", value[1]); break;                                         \
-                        sprintf(err1, "Implicit Type-Casting done");                                    \
-                        sprintf(err_mes, "Invalid Type for %s, expected int, got char. %s" , identifier_buffer,err1);      \
-                        yyerror(err_mes);                                                               \
+                case 1 :  sprintf(value,"%d", value[1]);                                                \
+                        PRINT_TYPE_ERROR(value,"INT","CHAR") break ;                                    \
                 case 2 :  break;                                                                        \
-                case 3 :  sprintf(value,"%d",atoi(value));break;                                        \
+                case 3 :  sprintf(value,"%d",atoi(value));                                              \
+                        PRINT_TYPE_ERROR(value,"INT","FLOAT") break ;                                   \
                 case 4 :  if (strcmp(value,"true") == 0 || strcmp(value,"TRUE") == 0)                   \
                                 sprintf(value,"%d",1);                                                  \
                           else                                                                          \
                                 sprintf(value,"%d",0);                                                  \
-                          break;                                                                        \
+                        PRINT_TYPE_ERROR(value,"INT","CHAR") break ;                                    \
                 case 5 :  sprintf(err1, "expected int,  got Type string"); flag =1 ; break;             \
             }                                                                                           \
         }                                                                                               \
         else if(strcmp(type_spec,"float") == 0 || strcmp(type_spec,"double") == 0){                     \
             switch(type){                                                                               \
-                case 1 :  sprintf(value,"%d", value[1]); break;                                         \
+                case 1 :  sprintf(value,"%d", value[1]);                                                \
+                        PRINT_TYPE_ERROR(value,"FLOAT","CHAR") break ;                                  \
                 case 2 :  break;                                                                        \
                 case 3 :  break;                                                                        \
                 case 4 :  if (strcmp(value,"true") == 0 || strcmp(value,"TRUE") == 0)                   \
                                 sprintf(value,"%d",1);                                                  \
                           else                                                                          \
                                 sprintf(value,"%d",0);                                                  \
-                          break;                                                                        \
+                        PRINT_TYPE_ERROR(value,"FLOAT","BOOL") break ;                                  \
                 case 5 :  sprintf(err1, "expected float,  got Type string"); flag =1 ; break;           \
             }                                                                                           \
         }                                                                                               \
         else if(strcmp(type_spec,"char") == 0){                                                         \
             switch(type){                                                                               \
                 case 1 :  sprintf(value,"%c",value[1]) ;break;                                          \
-                case 2 :  sprintf(value,"%c",atoi(value)); break;                                       \
-                case 3 :  sprintf(value,"%c",atoi(value)); break;                                       \
+                case 2 :  sprintf(value,"%c",atoi(value));                                              \
+                        PRINT_TYPE_ERROR(value,"CHAR","INT") break ;                                    \
+                case 3 :  sprintf(value,"%c",atoi(value));                                              \
+                        PRINT_TYPE_ERROR(value,"CHAR","FLOAT") break ;                                  \
                 case 4 :  if (strcmp(value,"true") == 0 || strcmp(value,"TRUE") == 0)                   \
                                 sprintf(value,"%d",1);                                                  \
                           else                                                                          \
                                 sprintf(value,"%d",0);                                                  \
-                          break;                                                                        \
+                        PRINT_TYPE_ERROR(value,"CHAR","BOOL") break ;                                   \
                 case 5 :  sprintf(err1, "expected char,  got Type string"); flag =1 ; break;            \
             }                                                                                           \
         }                                                                                               \
@@ -80,6 +89,7 @@ int type;
                     strcpy(value,"True");                                                               \
                 }                                                                                       \
             }                                                                                           \
+            PRINT_TYPE_ERROR(value,"BOOL","VALUE") break ;                                              \
         }                                                                                               \
         type = 0;                                                                     
 
@@ -123,23 +133,18 @@ int type;
         }
 
 #define TYPE_SPEC_SAVE(type_spec) strcpy(type_spec_buffer, type_spec);
-
 #define SYM_TAB_DEL(scope) remove_symbol_table_entry(symbol_table_fp, scope);
-
-#define CHECK_LOOP(loop,name)    \
-    if(loop == 0){          \
+#define CHECK_LOOP(loop,name)                                               \
+    if(loop == 0){                                                          \
             sprintf(err_mes, "%s Statment Outside Loop",name);              \
-            yyerror(err_mes);                                              \
+            yyerror(err_mes);                                               \
     }
 
 char* GET_VALUE(int scope,char* name);
 float find_val(char* name);
 int find_val_int(char* name);
-
-
-
-
 %}
+
 %union {
     int ival;
     float fval;

@@ -99,7 +99,6 @@ int create_mention_entry(int scope, char* name,char* value, int line_number) {
 
 
 void find_prev_entry(int scope, char* name, char* value) {
-    
     while(scope) {
         ident_node* cur = scope_table[scope].entries;
         //char res[200] = "None";

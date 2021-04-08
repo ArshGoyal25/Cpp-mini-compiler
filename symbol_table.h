@@ -24,7 +24,7 @@ typedef struct symbol_table {
 
 symbol_table scope_table[100];
 
-int create_declaration_entry(int scope, char* name, char* type, int is_initialized, char* value, int line_number);
+int create_declaration_entry(int scope, char* name, char* type,int storage, int is_initialized, char* value, int line_number);
 int create_mention_entry(int scope, char* name, char* value, int line_number);
 void remove_symbol_table_entry(FILE* symbol_table_fp, int scope);
 void get_ident_value(int scope, char* name, char* value);

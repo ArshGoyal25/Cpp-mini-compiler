@@ -5,13 +5,14 @@
 
 symbol_table scope_table[100];
 
-ident_node* create_ident(int scope, char* name, char* type, int is_initialized, int is_declaration, char* value, int line_number, int declaration_line) {
+ident_node* create_ident(int scope, char* name, char* type,int storage, int is_initialized, int is_declaration, char* value, int line_number, int declaration_line) {
     ident_node* new_node = malloc(sizeof(ident_node));
     new_node -> is_initialized = is_initialized;    
     new_node -> is_declaration = is_declaration;
     new_node -> line_number = line_number;
     new_node -> declaration_line = declaration_line;
     new_node -> scope = scope;
+    new_node -> storage = storage;
     new_node -> next = NULL;
     strcpy(new_node -> val_string, value);
     strcpy(new_node -> type, type);
@@ -19,10 +20,10 @@ ident_node* create_ident(int scope, char* name, char* type, int is_initialized, 
     return new_node;        
 }
 
-void add_identifier(int scope, char* name, char* type, int is_initialized, int is_declaration, char* value, int line_number, int declaration_line) {    
+void add_identifier(int scope, char* name, char* type, int storage, int is_initialized, int is_declaration, char* value, int line_number, int declaration_line) {    
     if(scope < 0) return;
     ident_node* cur = scope_table[scope].entries;
-    ident_node* new_ident = create_ident(scope, name, type, is_initialized, is_declaration, value, line_number, declaration_line);
+    ident_node* new_ident = create_ident(scope, name, type, storage, is_initialized, is_declaration, value, line_number, declaration_line);
     if(!cur) {
         scope_table[scope].entries = new_ident;        
     } else {
@@ -34,12 +35,13 @@ void add_identifier(int scope, char* name, char* type, int is_initialized, int i
 void display_symbol_table(FILE* symbol_table_fp, int scope) {
     if(scope < 0 || scope > 100 ) return;
     ident_node* cur  = scope_table[scope].entries;
-    fprintf(symbol_table_fp, "\nName\t\t\t\tType\t\tValue\t\tLine\tDeclaration Line\tScope\n");
-    fprintf(symbol_table_fp, "----------------------------------------------------------------------\n");
+    fprintf(symbol_table_fp, "\n%s\t\t\t\t%30s\t\t%10s\t\t%10s\t\t%10s\t\t%15s\t%10s\n","Name","Type","Storage","Value","Line","Declaration Line","Scope");
+    fprintf(symbol_table_fp, "-----------------------------------------------------------------------------------------------------------------------\n");
     while(cur) {
-        fprintf(symbol_table_fp, "%s\t\t\t\t\t%s\t\t\t%s\t\t\t%d\t\t%d\t\t\t\t\t%d\n", 
+        fprintf(symbol_table_fp, "%s\t\t\t\t\t%30s\t\t\t\t%d\t\t%10s\t\t\t\t%d\t\t\t\t\t%d\t\t\t\t%d\n", 
             cur -> name,
             cur -> type,
+            cur -> storage,
             cur -> val_string,
             cur -> line_number, 
             cur -> declaration_line,
@@ -73,19 +75,19 @@ ident_node* find_declaration(int scope, char* name) {
     return NULL;
 }
 
-int create_declaration_entry(int scope, char* name, char* type, int is_initialized, char* value, int line_number) {
+int create_declaration_entry(int scope, char* name, char* type,int storage, int is_initialized, char* value, int line_number) {
     ident_node* prev_dec = find_declaration(scope, name);    
     if(prev_dec && prev_dec -> scope == scope) {    // If there was a previous declaration in the same scope    
         return prev_dec -> line_number;
     }    
-    add_identifier(scope, name, type, is_initialized, 1, value, line_number, line_number);    
+    add_identifier(scope, name, type, storage, is_initialized, 1, value, line_number, line_number);    
     return 0;
 }
 
 int create_mention_entry(int scope, char* name,char* value, int line_number) {
     ident_node* prev_dec = find_declaration(scope, name);
     if(!prev_dec) return 1; // If identifier has not been declared
-    add_identifier(scope, name, prev_dec -> type, prev_dec -> is_initialized, 0, value , line_number, prev_dec -> line_number);
+    add_identifier(scope, name, prev_dec -> type, prev_dec -> storage ,prev_dec -> is_initialized, 0, value , line_number, prev_dec -> line_number);
     return 0;
 }
 

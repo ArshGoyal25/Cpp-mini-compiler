@@ -9,8 +9,10 @@ void yyerror(char *s);
 char value[20];
 char var[120] ;
 char err_mes[200];
+char err1[50];
 char type_spec_buffer[100];
 char identifier_buffer[100];
+int type;
 
 #define VALIDATE_IDENT_LEN(identifier)                                          \
         strcpy(identifier_buffer, identifier);                                  \
@@ -22,12 +24,77 @@ char identifier_buffer[100];
             yyerror(err_mes);                                                  \
         }
 
-#define SYM_TAB_DECL(scope, name, type_spec, is_initialized, value, line_number)                                           \
-        VALIDATE_IDENT_LEN(name);                                                                                   \
-        int err = create_declaration_entry(scope, identifier_buffer, type_spec, is_initialized, value, line_number);       \
-        if(err) {                                                                                                   \
-            sprintf(err_mes, "%s already declared in line %d", identifier_buffer, err);                             \
-            yyerror(err_mes);                                                                                       \
+
+#define CHECK_TYPE(type_spec, value, flag)                                                              \
+        if(strcmp(type_spec,"int") == 0){                                                               \
+            switch(type){                                                                               \
+                case 1 :  sprintf(value,"%d", value[1]); break;                                         \
+                case 2 :  break;                                                                        \
+                case 3 :  sprintf(value,"%d",atoi(value));break;                                        \
+                case 4 :  if (strcmp(value,"true") == 0 || strcmp(value,"TRUE") == 0)                   \
+                                sprintf(value,"%d",1);                                                  \
+                          else                                                                          \
+                                sprintf(value,"%d",0);                                                  \
+                          break;                                                                        \
+                case 5 :  sprintf(err1, "expected int,  got Type string"); flag =1 ; break;             \
+            }                                                                                           \
+        }                                                                                               \
+        else if(strcmp(type_spec,"float") == 0 || strcmp(type_spec,"double") == 0){                     \
+            switch(type){                                                                               \
+                case 1 :  sprintf(value,"%d", value[1]); break;                                         \
+                case 2 :  break;                                                                        \
+                case 3 :  break;                                                                        \
+                case 4 :  if (strcmp(value,"true") == 0 || strcmp(value,"TRUE") == 0)                   \
+                                sprintf(value,"%d",1);                                                  \
+                          else                                                                          \
+                                sprintf(value,"%d",0);                                                  \
+                          break;                                                                        \
+                case 5 :  sprintf(err1, "expected float,  got Type string"); flag =1 ; break;           \
+            }                                                                                           \
+        }                                                                                               \
+        else if(strcmp(type_spec,"char") == 0){                                                         \
+            switch(type){                                                                               \
+                case 1 :  sprintf(value,"%c",value[1]) ;break;                                          \
+                case 2 :  sprintf(value,"%c",atoi(value)); break;                                       \
+                case 3 :  sprintf(value,"%c",atoi(value)); break;                                       \
+                case 4 :  if (strcmp(value,"true") == 0 || strcmp(value,"TRUE") == 0)                   \
+                                sprintf(value,"%d",1);                                                  \
+                          else                                                                          \
+                                sprintf(value,"%d",0);                                                  \
+                          break;                                                                        \
+                case 5 :  sprintf(err1, "expected char,  got Type string"); flag =1 ; break;            \
+            }                                                                                           \
+        }                                                                                               \
+        else if(strcmp(type_spec,"bool") == 0){                                                         \
+            if(type == 5){                                                                              \
+                sprintf(err1, "expected char,  got Type string"); flag =1 ;                             \
+            }                                                                                           \
+            else if (type != 4){                                                                        \
+                if (atoi(value) == 0){                                                                  \
+                    strcpy(value,"True");                                                               \
+                }                                                                                       \
+                else{                                                                                   \
+                    strcpy(value,"Fal");                                                              \
+                }                                                                                       \
+            }                                                                                           \
+        }                                                                        
+
+
+#define SYM_TAB_DECL(scope, name, type_spec, is_initialized, value, line_number)                                                    \
+        VALIDATE_IDENT_LEN(name);                                                                                                   \
+        int flag = 0;                                                                                                               \
+        int err = 0;                                                                                                                \
+        CHECK_TYPE(type_spec,value,flag);                                                                                           \
+        if(flag){                                                                                                                   \
+            sprintf(err_mes, "Invalid Type for %s,  %s" , identifier_buffer,err1);                                                  \
+            yyerror(err_mes);                                                                                                       \
+        }                                                                                                                           \
+        else {                                                                                                                      \
+            err = create_declaration_entry(scope, identifier_buffer, type_spec, storage, is_initialized, value, line_number);       \
+        }                                                                                                                           \
+        if(err) {                                                                                                                   \
+            sprintf(err_mes, "%s already declared in line %d", identifier_buffer, err);                                             \
+            yyerror(err_mes);                                                                                                       \
         }
 
 #define SYM_TAB_ADD(scope, name, value, line_number)                                   \
@@ -187,10 +254,11 @@ default                 : DEFAULT ':' expression semi BREAK semi;
                         ;
 
 
-value               :   INT_CONS    {sprintf(var,"%d", $1); $$ = var;}
-                    |   FLOAT_CONS  {sprintf(var,"%f", $1); $$ = var;}
-                    |   STRING_CONS {printf(var,"%s", $1); $$ = var;}
-                    |   CHAR_CONS   {sprintf(var,"%s", $1); $$ = var;}
+value               :   CHAR_CONS   {sprintf(var,"%s", $1); $$ = var; type=1;}
+                    |   INT_CONS    {sprintf(var,"%d", $1); $$ = var; type=2;}
+                    |   FLOAT_CONS  {sprintf(var,"%f", $1); $$ = var; type=3;}
+                    |   BOOL_CONS   {sprintf(var,"%s", $1); $$ = var; type=4;} 
+                    |   STRING_CONS {sprintf(var,"%s", $1); $$ = var; type=5;}
                     ;
 
 expression              :   rel_expression
@@ -250,7 +318,7 @@ semi                :   ';'
 %%
 
 void yyerror(char *string) {
-	printf("Error occured (%d): %s\n", line_number, string);
+	printf("Error occured \t Line:(%2d) Col:(%d) \t: %s\n", line_number, --col_number, string);
 }
 
 int main() {

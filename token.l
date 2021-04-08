@@ -11,6 +11,7 @@ int line_number = 1;
 int col_number = 1;
 int line_of_declaration = 0;
 int scope = 0;
+int loop = 0;
 int storage;
 #define report_token(type, lexeme, line_number,col_number) 									\
 	fprintf(f_tokens, "<%s, '%s', %d, %d >\n", type, lexeme, line_number,col_number);		\
@@ -36,7 +37,7 @@ special				[!@#$^&.:;_]
 
 	/* comments and white spaces */
 ([ ]*|(\n\t)*|(\n)*|(\t)*)*\/\/.* { line_number++;}
-([ ]*|(\n\t)*|(\n)*|(\t)*)*\/\*(.*\n)*.*\*\/ 
+([ ]*|(\n\t)*|(\n)*|(\t)*)*\/\*(.*\n)*.*\*\/  { line_number++;}
 
 int[ ]main 			{ report_token("KEYW", "int", line_number,col_number); report_token("KEYW", "main", line_number,col_number); return PRO_BEG;}
 

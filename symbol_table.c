@@ -84,6 +84,12 @@ int create_declaration_entry(int scope, char* name, char* type,int storage, int 
     return 0;
 }
 
+char* find_var_type(int scope, char* name, int line_number) {
+    ident_node* prev_dec = find_declaration(scope, name);
+    if(!prev_dec) return "None"; // If identifier has not been declared
+    return prev_dec->type;
+}
+
 int create_mention_entry(int scope, char* name,char* value, int line_number) {
     ident_node* prev_dec = find_declaration(scope, name);
     if(!prev_dec) return 1; // If identifier has not been declared

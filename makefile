@@ -13,7 +13,7 @@ lex.yy.c: token.l
 	$(LEX) token.l
 
 y.tab.c: grammar.y lex.yy.c
-	$(YACC) $(YFLAGS) grammar.y
+	$(YACC) $(YFLAGS) grammar.y -v
 
 symbol_table.o: symbol_table.c
 	gcc -c symbol_table.c

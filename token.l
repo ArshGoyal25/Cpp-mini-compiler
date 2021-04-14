@@ -57,6 +57,7 @@ long[ ]+long 		{yylval.sval = strdup(yytext); report_token("KEYW", yytext, line_
 	/* ___ KEYWORDS ___*/
 
 if 					{ report_token("KEYW", yytext, line_number, col_number); return IF;}
+else 				{ report_token("KEYW", yytext, line_number, col_number); return ELSE;}
 break 				{ report_token("KEYW", yytext, line_number, col_number); return BREAK;}
 continue			{ report_token("KEYW", yytext, line_number, col_number); return CONTINUE;}
 while				{ report_token("KEYW", yytext, line_number, col_number); return WHILE;}

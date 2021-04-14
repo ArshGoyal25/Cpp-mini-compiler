@@ -117,19 +117,21 @@ int type;
         char *type_spec = (char*)malloc(20);                                                                                        \
         strcpy(type_spec,find_var_type(scope, name, line_number));                                                                  \
         if(strcmp(type_spec,"None") == 0) {                                                                                         \
-            sprintf(err_mes, "no declaration found for %s", name);                                                                  \
+            sprintf(err_mes, "No declaration found for %s", name);                                                                  \
             yyerror(err_mes);                                                                                                       \
         }                                                                                                                           \
-        CHECK_TYPE(type_spec,value,flag);                                                                                           \
-        if(flag){                                                                                                                   \
-            sprintf(err_mes, "Invalid Type for %s,  %s" , identifier_buffer,err1);                                                  \
-            yyerror(err_mes);                                                                                                       \
-        }                                                                                                                           \
-        else                                                                                                                        \
-            err = create_mention_entry(scope, name, value, line_number);                                                            \
-        if(err) {                                                                                                                   \
-            sprintf(err_mes, "no declaration found for %s", name);                                                                  \
-            yyerror(err_mes);                                                                                                       \
+        else {                                                                                                                      \
+            CHECK_TYPE(type_spec,value,flag);                                                                                       \
+            if(flag){                                                                                                               \
+                sprintf(err_mes, "Invalid Type for %s,  %s" , identifier_buffer,err1);                                              \
+                yyerror(err_mes);                                                                                                   \
+            }                                                                                                                       \
+            else                                                                                                                    \
+                err = create_mention_entry(scope, name, value, line_number);                                                        \
+            if(err) {                                                                                                               \
+                sprintf(err_mes, "No declaration found for %s", name);                                                              \
+                yyerror(err_mes);                                                                                                   \
+            }                                                                                                                       \
         }
 
 #define TYPE_SPEC_SAVE(type_spec) strcpy(type_spec_buffer, type_spec);
@@ -169,6 +171,9 @@ int find_val_int(char* name);
 %left '*' '/' '%'
 %right NOT B_NOT
 
+%nonassoc IFX
+%nonassoc ELSE
+
 
 %token PRE_DIR
 %token <sval> IDENT
@@ -178,7 +183,7 @@ int find_val_int(char* name);
 
 %token PRO_BEG
 
-%token IF BREAK CONTINUE RETURN COUT INCLUDE
+%token IF ELSE BREAK CONTINUE RETURN COUT INCLUDE
 %token WHILE SWITCH CASE DEFAULT
 
 %token LT GT LE GE EQ NE
@@ -196,7 +201,7 @@ int find_val_int(char* name);
 start:              header {printf("Program accepted\n"); }
     ;
 header:             PRE_DIR header
-    |               main
+    |               main    {printf("End of Main Function\n"); }
     ;
 main:               PRO_BEG left_brac_s right_brac_s left_brac_c compound_statement right_brac_c 
     ;
@@ -207,10 +212,8 @@ right_brac_s:       ')'
     |               error { yyerror("Missing )\n");}
     ;		    
 left_brac_c:        '{'   { ++scope; }
-    |               error { yyerror("Missing {\n");}
     ;
 right_brac_c:       '}'   { SYM_TAB_DEL(scope); --scope; }
-    |               error { yyerror("Missing }\n");}
     ;
 
 compound_statement: statement compound_statement 
@@ -245,22 +248,32 @@ list_value:             value ',' list_value
 list_var_declaration:   IDENT                                         { SYM_TAB_DECL(scope, $1, type_spec_buffer, 0, "None", line_number); }
     |                   IDENT '=' expression                          { SYM_TAB_DECL(scope, $1, type_spec_buffer, 1, $3 , line_number);}
     |                   IDENT ',' list_var_declaration                { SYM_TAB_DECL(scope, $1, type_spec_buffer, 0, "None" ,line_number); }
-    |                   IDENT '=' expression                          { SYM_TAB_DECL(scope, $1, type_spec_buffer, 1, $3 , line_number);}           ',' list_var_declaration 
+    |                   IDENT '=' expression                          { SYM_TAB_DECL(scope, $1, type_spec_buffer, 1, $3 , line_number);}           ',' list_var_declaration
     ;
 
-list_var:               IDENT                                 { SYM_TAB_ADD(scope, $1, GET_VALUE(scope,$1), line_number); }
-    |                   IDENT '=' expression                  { SYM_TAB_ADD(scope, $1, $3, line_number);}
-    |                   IDENT ',' list_var                    { SYM_TAB_ADD(scope, $1, GET_VALUE(scope,$1) ,line_number); }
-    |                   IDENT '=' expression                  { SYM_TAB_ADD(scope, $1, $3, line_number);}              ',' list_var     
+list_var:               IDENT '=' expression                         { SYM_TAB_ADD(scope, $1, $3, line_number);}
+    |                   IDENT ',' list_var                           { SYM_TAB_ADD(scope, $1, GET_VALUE(scope,$1) ,line_number); }
+    |                   IDENT '=' expression                         { SYM_TAB_ADD(scope, $1, $3, line_number);}              ',' list_var
     ;
 
-if_header:              IF left_brac_s expression right_brac_s { ++scope; }
+if_header:              IF left_brac_s expression right_brac_s      { ++scope; }
+    ;
 
-if_statement:           if_header '{' compound_statement '}'        { SYM_TAB_DEL(scope); --scope; }
-    |                   if_header statement                         { SYM_TAB_DEL(scope); --scope; }
+if_statement:           if_header '{' compound_statement '}'  %prec IFX              { SYM_TAB_DEL(scope); --scope; }
+    |                   if_header '{' compound_statement '}' else_statement          
+    |                   if_header statement %prec IFX                                { SYM_TAB_DEL(scope); --scope; }
+    |                   if_header statement else_statement                           
+    ;
+
+else_header:            ELSE                                            { SYM_TAB_DEL(scope); --scope; ++scope; }
+    ;
+
+else_statement:         else_header statement                           { SYM_TAB_DEL(scope); --scope; }
+    |                   else_header '{' compound_statement '}'          { SYM_TAB_DEL(scope); --scope; }
     ;
 
 while_header:           WHILE left_brac_s expression right_brac_s       { ++scope; ++loop ; }
+    ;
 
 loop_statement:         while_header '{' compound_statement '}'         { SYM_TAB_DEL(scope); --scope; --loop;}
     |                   while_header statement                          { SYM_TAB_DEL(scope); --scope; --loop;}

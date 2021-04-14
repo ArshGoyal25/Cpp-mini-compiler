@@ -111,6 +111,38 @@ void bin_icg()
     insert_into_quad(oper,left_operand,right_operand,new_var);
 }
 
+void inc_icg(){
+    char operand[20];
+    pop_from_icg_stack(operand);
+        
+    char new_var[20];
+    create_inter_var(new_var);
+
+    fprintf(f_icg,"%s = %s %s %s\n",new_var,"1","+",operand);
+    insert_into_quad("+","1",operand,new_var);
+
+    fprintf(f_icg,"%s = %s\n",operand,new_var);
+    insert_into_quad("=",new_var,"",operand);
+
+    push_onto_icg_stack(operand);
+}
+
+void dec_icg(){
+    char operand[20];
+    pop_from_icg_stack(operand);
+        
+    char new_var[20];
+    create_inter_var(new_var);
+
+    fprintf(f_icg,"%s = %s %s %s\n",new_var,"1","-",operand);
+    insert_into_quad("-","1",operand,new_var);
+
+    fprintf(f_icg,"%s = %s\n",operand,new_var);
+    insert_into_quad("=",new_var,"",operand);
+
+    push_onto_icg_stack(operand);
+
+}
 
 void create_new_branch_var(char branch[20])
 {

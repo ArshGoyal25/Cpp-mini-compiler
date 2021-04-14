@@ -343,10 +343,10 @@ logic_expression:       NOT expression
     |                   expression OR expression
     ;
 
-inc_dec_expression:     INCREMENT ident                               { inc_dec_icg(); }
-    |                   DECREMENT ident                               { inc_dec_icg(); }
-    |                   ident INCREMENT                               { inc_dec_icg(); }
-    |                   ident DECREMENT                               { inc_dec_icg(); }
+inc_dec_expression:     INCREMENT ident                               { inc_icg(); }
+    |                   DECREMENT ident                               { dec_icg(); }
+    |                   ident INCREMENT                               { inc_icg(); }
+    |                   ident DECREMENT                               { dec_icg(); }
     ;
 
 semi:                   ';'

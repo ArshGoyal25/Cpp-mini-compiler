@@ -257,54 +257,53 @@ list_var:               ident '=' expression                         { assign_ic
     |                   ident '=' expression                         { assign_icg();}              ',' list_var
     ;
 
-if_header:              IF left_brac_s expression right_brac_s      { ++scope; }
+if_header:              IF left_brac_s expression right_brac_s      { rel_expr(); ++scope; }
     ;
 
-if_statement:           if_header '{' compound_statement '}'  %prec IFX              { --scope; }
+if_statement:           if_header '{' compound_statement '}'  %prec IFX              { if_branch_end(); --scope; }
     |                   if_header '{' compound_statement '}' else_statement          
-    |                   if_header statement %prec IFX                                { --scope; }
+    |                   if_header statement %prec IFX                                { if_branch_end(); --scope; }
     |                   if_header statement else_statement                           
     ;
 
-else_header:            ELSE                                            { --scope; ++scope; }
+else_header:            ELSE                                            { if_branch_end_with_else(); --scope; ++scope; }
     ;
 
-else_statement:         else_header statement                           {--scope; }
-    |                   else_header '{' compound_statement '}'          {--scope; }
+else_statement:         else_header statement                           {if_branch_end(); --scope; }
+    |                   else_header '{' compound_statement '}'          {if_branch_end(); --scope; }
     ;
 
-while_header:           WHILE left_brac_s expression right_brac_s       { ++scope; ++loop ; }
+while_header:           WHILE {create_branch();}    left_brac_s expression right_brac_s       { rel_expr(); ++scope; ++loop ; }
     ;
 
-loop_statement:         while_header '{' compound_statement '}'         {--scope; --loop;}
-    |                   while_header statement                          {--scope; --loop;}
+loop_statement:         while_header '{' compound_statement '}'         {while_branch_end(); --scope; --loop;}
+    |                   while_header statement                          {while_branch_end(); --scope; --loop;}
     ;
 
-jump_statement:         BREAK                                  
+jump_statement:         BREAK               {break_icg();}                     
     |                   CONTINUE                               
     |                   RETURN expression
     ;
 
-switch_header:           SWITCH left_brac_s IDENT right_brac_s                     { ++loop ;}
+switch_header:           SWITCH left_brac_s ident right_brac_s                     { switch_test(); ++loop ;}
     ;
 
-switch_statement:       switch_header left_brac_c cases right_brac_c              { --loop ;}
-    |                   switch_header left_brac_c cases default right_brac_c      { --loop ;}
+switch_statement:       switch_header left_brac_c cases right_brac_c              { switch_case_end(); --loop ;}
+    |                   switch_header left_brac_c cases default right_brac_c      { switch_case_end(); --loop ;}
     ;
 
-cases:                  CASE INT_CONS ':' compound_statement
-    |                   cases CASE INT_CONS ':' compound_statement
+cases:                  CASE INT_CONS ':'     {sprintf(var,"%d", $2); push_onto_icg_stack(var); switch_case();}      compound_statement         {case_end();}
+    |                   cases CASE INT_CONS ':'     {sprintf(var,"%d", $3); push_onto_icg_stack(var); switch_case();}     compound_statement    {case_end();}
     ;
                     
-default:                DEFAULT ':' expression semi BREAK semi;
+default:                DEFAULT ':'   {push_onto_icg_stack("None"); switch_case();}  compound_statement        { case_end();} 
     ;
 
-
-value:                  CHAR_CONS           {sprintf(var,"%s", $1); $$ = var; type=1; push_onto_icg_stack(var); }
-    |                   INT_CONS            {sprintf(var,"%d", $1); $$ = var; type=2; push_onto_icg_stack(var); }
-    |                   FLOAT_CONS          {sprintf(var,"%f", $1); $$ = var; type=3; push_onto_icg_stack(var); }
-    |                   BOOL_CONS           {sprintf(var,"%s", $1); $$ = var; type=4; push_onto_icg_stack(var); } 
-    |                   STRING_CONS         {sprintf(var,"%s", $1); $$ = var; type=5; push_onto_icg_stack(var); } 
+value:                  CHAR_CONS           {sprintf(var,"%s", $1); $$ = var; push_onto_icg_stack(var); }
+    |                   INT_CONS            {sprintf(var,"%d", $1); $$ = var; push_onto_icg_stack(var); }
+    |                   FLOAT_CONS          {sprintf(var,"%f", $1); $$ = var; push_onto_icg_stack(var); }
+    |                   BOOL_CONS           {sprintf(var,"%s", $1); $$ = var; push_onto_icg_stack(var); } 
+    |                   STRING_CONS         {sprintf(var,"%s", $1); $$ = var; push_onto_icg_stack(var); } 
     ;
 
 expression:             rel_expression
@@ -344,10 +343,10 @@ logic_expression:       NOT expression
     |                   expression OR expression
     ;
 
-inc_dec_expression:     INCREMENT IDENT                               { float temp = find_val($2) ; temp +=1 ; char res[20];  sprintf(res,"%f", temp); }
-    |                   DECREMENT IDENT                               { float temp = find_val($2) ; temp -=1 ; char res[20];  sprintf(res,"%f", temp); }
-    |                   IDENT INCREMENT                               { float temp = find_val($1) ; temp +=1 ; char res[20];  sprintf(res,"%f", temp); }
-    |                   IDENT DECREMENT                               { float temp = find_val($1) ; temp -=1 ; char res[20];  sprintf(res,"%f", temp); }
+inc_dec_expression:     INCREMENT ident                               { inc_dec_icg(); }
+    |                   DECREMENT ident                               { inc_dec_icg(); }
+    |                   ident INCREMENT                               { inc_dec_icg(); }
+    |                   ident DECREMENT                               { inc_dec_icg(); }
     ;
 
 semi:                   ';'

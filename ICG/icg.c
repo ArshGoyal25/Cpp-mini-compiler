@@ -6,6 +6,8 @@
 int top = -1;
 int inter_var_no = 0;
 int branch_no = 0;
+int top_br = -1;
+int case_no = 0;
 
 void create_inter_var(char inter[20])
 {
@@ -108,5 +110,164 @@ void bin_icg()
 
     insert_into_quad(oper,left_operand,right_operand,new_var);
 }
-/////////////////////////////////////////////////////
 
+
+void create_new_branch_var(char branch[20])
+{
+    strcpy(branch,"L");
+    char digit[20];
+    sprintf(digit,"%d",branch_no);
+    strcat(branch,digit);
+
+    top_br++;
+    branch_stk[top_br] = branch_no;
+    branch_no++;
+}
+
+void create_branch()
+{
+    char branch[20];
+    create_new_branch_var(branch);
+
+    fprintf(f_icg,"%s:\n",branch);
+    insert_into_quad("goto","","",branch);
+}
+
+void rel_expr()
+{
+    char val[20];
+    pop_from_icg_stack(val);
+
+    char var_getting_val[20];
+    create_inter_var(var_getting_val);
+    
+    fprintf(f_icg,"%s = not %s\n",var_getting_val,val);
+    insert_into_quad("not",val,"",var_getting_val);
+    
+    char branch[20];
+    create_new_branch_var(branch);
+    fprintf(f_icg,"if %s GOTO %s\n",var_getting_val,branch);
+    insert_into_quad("if",var_getting_val,"",branch);
+}
+
+void while_branch_end(){
+    int br = branch_stk[top_br];
+    char branch[20];
+    strcpy(branch,"L");
+    char digit[20];
+    sprintf(digit,"%d",br-1);
+    strcat(branch,digit);
+
+    fprintf(f_icg,"GOTO %s\n",branch);
+    insert_into_quad("goto","","",branch);
+
+    strcpy(branch,"L");
+    sprintf(digit,"%d",br);
+    strcat(branch,digit);
+    fprintf(f_icg,"%s:\n",branch);
+    top_br -= 2;
+}
+
+void if_branch_end(){
+    int br = branch_stk[top_br];
+    top_br--;
+
+    char branch[20];
+    strcpy(branch,"L");
+    char digit[20];
+    sprintf(digit,"%d",br);
+    strcat(branch,digit);
+
+    fprintf(f_icg,"%s:\n",branch);
+}
+
+void if_branch_end_with_else(){
+
+    char branch[20];
+
+    create_new_branch_var(branch);
+
+    fprintf(f_icg,"GOTO %s\n",branch);
+    insert_into_quad("goto","","",branch);
+
+    int br = branch_stk[top_br-1];
+
+    strcpy(branch,"L");
+    char digit[20];
+    sprintf(digit,"%d",br);
+    strcat(branch,digit);
+
+    fprintf(f_icg,"%s:\n",branch);
+    
+}
+
+void break_icg(){
+    int a;
+}
+
+void switch_test(){
+    char val[20];
+    pop_from_icg_stack(val);
+
+    char new_var[20];
+    create_inter_var(new_var);
+
+    fprintf(f_icg,"%s = %s\n",new_var,val);
+    insert_into_quad("=",val,"",new_var);
+    push_onto_icg_stack(new_var);
+    
+ 
+    fprintf(f_icg,"GOTO test\n");
+    insert_into_quad("goto","","","test");
+    case_no = 0;
+}
+
+void switch_case(){
+    char branch[20];
+    create_new_branch_var(branch);
+    case_no +=1;
+    strcpy(switch_stk[case_no],branch);
+    fprintf(f_icg,"%s:\n",branch);
+    // insert_into_quad("goto","","",branch);
+}
+
+void case_end(){
+    fprintf(f_icg,"GOTO last\n");
+    insert_into_quad("goto","","","last");
+}
+
+void switch_case_end(){
+    char branch[20];
+    strcpy(branch,"test");
+    fprintf(f_icg,"%s:\n",branch);
+
+    char val[20];
+    char cases[10][20];
+    int temp = case_no;
+    while(temp!=0){
+        pop_from_icg_stack(val);
+        strcpy(cases[temp],val);
+        temp -=1;
+    }
+
+    char var_been_checked[20];
+    pop_from_icg_stack(var_been_checked);
+        
+    temp += 1;
+    while(temp <= case_no && strcmp(cases[temp],"None")!=0 ){
+
+        char new_var[20];
+        create_inter_var(new_var);
+        
+        fprintf(f_icg,"%s : %s %s %s\n",new_var,var_been_checked,"==",cases[temp]);
+        insert_into_quad("==",var_been_checked,cases[temp],new_var);
+
+        fprintf(f_icg,"if %s GOTO %s\n",new_var, switch_stk[temp]);
+        insert_into_quad("if",new_var,"",switch_stk[temp]);
+        temp +=1;
+    }
+    if(strcmp(cases[temp],"None")==0){
+        fprintf(f_icg,"GOTO %s\n",switch_stk[temp]);
+        insert_into_quad("goto","","",switch_stk[temp]);
+    }
+}

@@ -2,7 +2,8 @@
 #include<stdio.h>
 #include<string.h>
 #include"lex.yy.c"
-#include "symbol_table.h"
+#include "icg.h"
+#include "quad.h"
 int yylex();
 void yyerror(char *s);
 
@@ -13,6 +14,7 @@ char err1[50];
 char type_spec_buffer[100];
 char identifier_buffer[100];
 int type;
+
 
 #define VALIDATE_IDENT_LEN(identifier)                                          \
         strcpy(identifier_buffer, identifier);                                  \
@@ -196,7 +198,7 @@ int find_val_int(char* name);
 %token ERR
 
 
-%type <sval> value expression rel_expression bin_expression logic_expression arith_expression inc_dec_expression
+%type <sval> value expression rel_expression bin_expression logic_expression arith_expression inc_dec_expression ident
 %%
 start:              header {printf("Program accepted\n"); }
     ;
@@ -227,61 +229,63 @@ statement:          expression semi
     |               switch_statement
     ;
 
-datatype:          TYPE_SPEC                                           
+datatype:           TYPE_SPEC                                           
     ;
 declaration:         datatype list_var_declaration
     |                datatype array_declaration
     ;
 
-array_declaration:   IDENT '[' ']' '=' '{' list_value '}'                    { sprintf(var, "%s array", type_spec_buffer);  SYM_TAB_DECL(scope, $1, var, 1, "None", line_number); }
-    |                IDENT '[' expression ']'                                { sprintf(var, "%s array", type_spec_buffer);  SYM_TAB_DECL(scope, $1, var, 0, "None", line_number); }
-    |                IDENT '['expression ']' '=' '{' list_value '}'          { sprintf(var, "%s array", type_spec_buffer);  SYM_TAB_DECL(scope, $1, var, 1, "None", line_number); }
+array_declaration:   IDENT '[' ']' '=' '{' list_value '}'                   
+    |                IDENT '[' expression ']'                                
+    |                IDENT '['expression ']' '=' '{' list_value '}'         
     ;
 
 list_value:             value ',' list_value
     |                   value
     ;          
 
-list_var_declaration:   IDENT                                         { assign_icg();}
-    |                   IDENT '=' expression                          { assign_icg();}
-    |                   IDENT ',' list_var_declaration                { assign_icg();}
-    |                   IDENT '=' expression                          { assign_icg();}           ',' list_var_declaration
+list_var_declaration:   ident                                         { push_onto_icg_stack("None"); assign_icg();}
+    |                   ident '=' expression                          { assign_icg();}
+    |                   ident ',' list_var_declaration                { push_onto_icg_stack("None"); assign_icg();}
+    |                   ident '=' expression                          { assign_icg();}           ',' list_var_declaration
     ;
 
-list_var:               IDENT '=' expression                         { SYM_TAB_ADD(scope, $1, $3, line_number);}
-    |                   IDENT ',' list_var                           { SYM_TAB_ADD(scope, $1, GET_VALUE(scope,$1) ,line_number); }
-    |                   IDENT '=' expression                         { SYM_TAB_ADD(scope, $1, $3, line_number);}              ',' list_var
+ident:                  IDENT                                         { push_onto_icg_stack($1);}
+    ;
+list_var:               ident '=' expression                         { assign_icg();}
+    |                   ident ',' list_var                           { assign_icg();}
+    |                   ident '=' expression                         { assign_icg();}              ',' list_var
     ;
 
 if_header:              IF left_brac_s expression right_brac_s      { ++scope; }
     ;
 
-if_statement:           if_header '{' compound_statement '}'  %prec IFX              { SYM_TAB_DEL(scope); --scope; }
+if_statement:           if_header '{' compound_statement '}'  %prec IFX              { --scope; }
     |                   if_header '{' compound_statement '}' else_statement          
-    |                   if_header statement %prec IFX                                { SYM_TAB_DEL(scope); --scope; }
+    |                   if_header statement %prec IFX                                { --scope; }
     |                   if_header statement else_statement                           
     ;
 
-else_header:            ELSE                                            { SYM_TAB_DEL(scope); --scope; ++scope; }
+else_header:            ELSE                                            { --scope; ++scope; }
     ;
 
-else_statement:         else_header statement                           { SYM_TAB_DEL(scope); --scope; }
-    |                   else_header '{' compound_statement '}'          { SYM_TAB_DEL(scope); --scope; }
+else_statement:         else_header statement                           {--scope; }
+    |                   else_header '{' compound_statement '}'          {--scope; }
     ;
 
 while_header:           WHILE left_brac_s expression right_brac_s       { ++scope; ++loop ; }
     ;
 
-loop_statement:         while_header '{' compound_statement '}'         { SYM_TAB_DEL(scope); --scope; --loop;}
-    |                   while_header statement                          { SYM_TAB_DEL(scope); --scope; --loop;}
+loop_statement:         while_header '{' compound_statement '}'         {--scope; --loop;}
+    |                   while_header statement                          {--scope; --loop;}
     ;
 
-jump_statement:         BREAK                                   {CHECK_LOOP(loop,"Break"); }
-    |                   CONTINUE                                {CHECK_LOOP(loop,"Continue"); }
+jump_statement:         BREAK                                  
+    |                   CONTINUE                               
     |                   RETURN expression
     ;
 
-switch_header:           SWITCH left_brac_s IDENT right_brac_s                     { ++loop ; SYM_TAB_ADD(scope, $3, GET_VALUE(scope,$3), line_number);}
+switch_header:           SWITCH left_brac_s IDENT right_brac_s                     { ++loop ;}
     ;
 
 switch_statement:       switch_header left_brac_c cases right_brac_c              { --loop ;}
@@ -292,15 +296,15 @@ cases:                  CASE INT_CONS ':' compound_statement
     |                   cases CASE INT_CONS ':' compound_statement
     ;
                     
-default: DEFAULT ':' expression semi BREAK semi;
+default:                DEFAULT ':' expression semi BREAK semi;
     ;
 
 
-value:                  CHAR_CONS           {sprintf(var,"%s", $1); $$ = var; type=1;}
-    |                   INT_CONS            {sprintf(var,"%d", $1); $$ = var; type=2;}
-    |                   FLOAT_CONS          {sprintf(var,"%f", $1); $$ = var; type=3;}
-    |                   BOOL_CONS           {sprintf(var,"%s", $1); $$ = var; type=4;} 
-    |                   STRING_CONS         {sprintf(var,"%s", $1); $$ = var; type=5;}
+value:                  CHAR_CONS           {sprintf(var,"%s", $1); $$ = var; type=1; push_onto_icg_stack(var); }
+    |                   INT_CONS            {sprintf(var,"%d", $1); $$ = var; type=2; push_onto_icg_stack(var); }
+    |                   FLOAT_CONS          {sprintf(var,"%f", $1); $$ = var; type=3; push_onto_icg_stack(var); }
+    |                   BOOL_CONS           {sprintf(var,"%s", $1); $$ = var; type=4; push_onto_icg_stack(var); } 
+    |                   STRING_CONS         {sprintf(var,"%s", $1); $$ = var; type=5; push_onto_icg_stack(var); } 
     ;
 
 expression:             rel_expression
@@ -309,30 +313,30 @@ expression:             rel_expression
     |                   arith_expression                    
     |                   inc_dec_expression          
     |                   value                               
-    |                   IDENT                                    {SYM_TAB_ADD(scope, $1, GET_VALUE(scope,$1), line_number); }                             
+    |                   ident                                                            
     ;
 
-rel_expression:         expression LT expression                {int temp ; if (find_val($1) < find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp);}                 
-    |                   expression GT expression                {int temp ; if (find_val($1) > find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp);}
-    |                   expression LE expression                {int temp ; if (find_val($1) <= find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp);}
-    |                   expression GE expression                {int temp ; if (find_val($1) >= find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp);}
-    |                   expression EQ expression                {int temp ; if (find_val($1) == find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp);}
-    |                   expression NE expression                {int temp ; if (find_val($1) != find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp);}
+rel_expression:         expression LT   {push_onto_icg_stack("<");}    expression                { rel_icg(); }                 
+    |                   expression GT   {push_onto_icg_stack(">");}    expression                { rel_icg(); } 
+    |                   expression LE   {push_onto_icg_stack("<=");}   expression                { rel_icg(); } 
+    |                   expression GE   {push_onto_icg_stack(">=");}   expression                { rel_icg(); } 
+    |                   expression EQ   {push_onto_icg_stack("==");}   expression                { rel_icg(); } 
+    |                   expression NE   {push_onto_icg_stack("!=");}   expression                { rel_icg(); } 
     ;
 
-arith_expression:       expression '+' expression               {float temp = find_val($1) + find_val($3)  ;  sprintf($$,"%f", temp); }     
-    |                   expression '-' expression               {float temp = find_val($1) - find_val($3)  ;  sprintf($$,"%f", temp); } 
-    |                   expression '/' expression               {float temp = find_val($1) / find_val($3)  ;  sprintf($$,"%f", temp); } 
-    |                   expression '*' expression               {float temp = find_val($1) * find_val($3)  ;  sprintf($$,"%f", temp); } 
-    |                   expression '%' expression               {int temp = find_val_int($1) % find_val_int($3)  ;  sprintf($$,"%d", temp); } 
+arith_expression:       expression '+'  {push_onto_icg_stack("+");}     expression               { arit_icg(); }     
+    |                   expression '-'  {push_onto_icg_stack("-");}     expression               { arit_icg(); } 
+    |                   expression '/'  {push_onto_icg_stack("/");}     expression               { arit_icg(); } 
+    |                   expression '*'  {push_onto_icg_stack("*");}     expression               { arit_icg(); } 
+    |                   expression '%'  {push_onto_icg_stack("%");}     expression               { arit_icg(); } 
     ;
 
-bin_expression:         B_NOT expression                        {float temp = !find_val($2)  ;  sprintf($$,"%f", temp); }
-    |                   expression B_XOR expression             {int temp = find_val_int($1) ^ find_val_int($3)  ;  sprintf($$,"%d", temp); }
-    |                   expression B_AND expression             {int temp = find_val_int($1) & find_val_int($3)  ;  sprintf($$,"%d", temp); }
-    |                   expression B_OR expression              {int temp = find_val_int($1) | find_val_int($3)  ;  sprintf($$,"%d", temp); }
-    |                   expression B_LSHIFT expression          {int temp = find_val_int($1) << find_val_int($3)  ;  sprintf($$,"%d", temp); }
-    |                   expression B_RSHIFT expression          {int temp = find_val_int($1) >> find_val_int($3)  ;  sprintf($$,"%d", temp); }
+bin_expression:         B_NOT               {push_onto_icg_stack("%");}     expression              { bin_icg(); }
+    |                   expression B_XOR    {push_onto_icg_stack("^");}     expression              { bin_icg(); }
+    |                   expression B_AND    {push_onto_icg_stack("&");}     expression              { bin_icg(); }
+    |                   expression B_OR     {push_onto_icg_stack("|");}     expression              { bin_icg(); }
+    |                   expression B_LSHIFT {push_onto_icg_stack("<<");}    expression              { bin_icg(); }
+    |                   expression B_RSHIFT {push_onto_icg_stack(">>");}    expression              { bin_icg(); }
     ;
 
 logic_expression:       NOT expression
@@ -340,10 +344,10 @@ logic_expression:       NOT expression
     |                   expression OR expression
     ;
 
-inc_dec_expression:     INCREMENT IDENT                               { float temp = find_val($2) ; temp +=1 ; char res[20];  sprintf(res,"%f", temp); SYM_TAB_ADD(scope, $2, res, line_number);$$ = res;}
-    |                   DECREMENT IDENT                               { float temp = find_val($2) ; temp -=1 ; char res[20];  sprintf(res,"%f", temp); SYM_TAB_ADD(scope, $2, res, line_number);$$ = res;}
-    |                   IDENT INCREMENT                               { float temp = find_val($1) ; temp +=1 ; char res[20];  sprintf(res,"%f", temp); SYM_TAB_ADD(scope, $1, res, line_number);$$ = res;}
-    |                   IDENT DECREMENT                               { float temp = find_val($1) ; temp -=1 ; char res[20];  sprintf(res,"%f", temp); SYM_TAB_ADD(scope, $1, res, line_number);$$ = res;}
+inc_dec_expression:     INCREMENT IDENT                               { float temp = find_val($2) ; temp +=1 ; char res[20];  sprintf(res,"%f", temp); }
+    |                   DECREMENT IDENT                               { float temp = find_val($2) ; temp -=1 ; char res[20];  sprintf(res,"%f", temp); }
+    |                   IDENT INCREMENT                               { float temp = find_val($1) ; temp +=1 ; char res[20];  sprintf(res,"%f", temp); }
+    |                   IDENT DECREMENT                               { float temp = find_val($1) ; temp -=1 ; char res[20];  sprintf(res,"%f", temp); }
     ;
 
 semi:                   ';'
@@ -359,11 +363,13 @@ void yyerror(char *string) {
 int main() {
     yyin = fopen("input_file.cpp","r");
     f_tokens = fopen("tokens.txt","w");
-    symbol_table_fp = fopen("symbol_table.txt", "w");
     f_icg = fopen("icg.txt","w");
-    f_quad = fopen("quad.txt","w");
 
     yyparse();
+
+    f_quad = fopen("quad.txt","w");
+    write_quad(f_quad);
+    fclose(f_quad);
 
     fclose(f_tokens);
     return 0;
@@ -373,7 +379,7 @@ int main() {
 char* GET_VALUE(int scope,char* name){
         char * ans = (char*)(malloc(sizeof(char)*20)); 
         strcpy(ans,"None");
-        get_ident_value(scope,name,ans);
+        //get_ident_value(scope,name,ans);
         //printf("%s\n",ans);                                          
         return ans;
 }
@@ -395,3 +401,4 @@ int find_val_int(char* name){
         ans =  atoi(GET_VALUE(scope,name));
     return ans;
 }
+///////////////////////////////////////

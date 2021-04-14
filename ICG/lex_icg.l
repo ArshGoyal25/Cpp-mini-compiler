@@ -13,18 +13,14 @@ int line_of_declaration = 0;
 int scope = 0;
 int loop = 0;
 int storage;
+
 #define report_token(type, lexeme, line_number,col_number) 									\
 	fprintf(f_tokens, "<%s, '%s', %d, %d >\n", type, lexeme, line_number,col_number);		\
 	col_number ++;
 void yyerror(char *);
 FILE *f_tokens;
 FILE *symbol_table_fp;
-FILE *f_icg;
 FILE *f_quad;
-
-//ICG
-char icg_var_stack[100][20];
-int top = -1;
 
 %}
 

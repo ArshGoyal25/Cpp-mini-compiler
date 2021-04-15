@@ -7,6 +7,8 @@
 char icg_var_stack[100][20];
 int branch_stk[50];
 char switch_stk[100][20];
+int loop_stk[20];
+
 FILE *f_icg;
 
 //ICG
@@ -16,6 +18,7 @@ void assign_icg();
 void arit_icg();
 void rel_icg();
 void bin_icg();
+void logic_icg();
 void inc_icg();
 void dec_icg();
 void create_branch();

@@ -6,8 +6,11 @@
 int top = -1;
 int inter_var_no = 0;
 int branch_no = 0;
+int switch_no = 0;
 int top_br = -1;
 int case_no = 0;
+int top_loop = -1;
+int inside_switch = 0;
 
 void create_inter_var(char inter[20])
 {
@@ -37,14 +40,13 @@ void pop_from_icg_stack(char val[20])
 }
 
 void assign_icg(){
-    printf("assign_icg\n");
     char val_being_assign[20];
     pop_from_icg_stack(val_being_assign);
 
     char var_getting_val[20];
     pop_from_icg_stack(var_getting_val);
 
-    fprintf(f_icg,"%s = %s\n",var_getting_val,val_being_assign);
+    fprintf(f_icg,"    %s = %s\n",var_getting_val,val_being_assign);
     insert_into_quad("=",val_being_assign,"",var_getting_val);
 }
 
@@ -61,7 +63,7 @@ void arit_icg(){
     char new_var[20];
     create_inter_var(new_var);
     
-    fprintf(f_icg,"%s = %s %s %s\n",new_var,left_operand,oper,right_operand);
+    fprintf(f_icg,"    %s = %s %s %s\n",new_var,left_operand,oper,right_operand);
 
     push_onto_icg_stack(new_var);
     
@@ -83,7 +85,7 @@ void rel_icg()
     char new_var[20];
     create_inter_var(new_var);
 
-    fprintf(f_icg,"%s = %s %s %s\n",new_var,left_operand,oper,right_operand);
+    fprintf(f_icg,"    %s = %s %s %s\n",new_var,left_operand,oper,right_operand);
 
     push_onto_icg_stack(new_var);
 
@@ -104,7 +106,27 @@ void bin_icg()
     char new_var[20];
     create_inter_var(new_var);
 
-    fprintf(f_icg,"%s = %s %s %s\n",new_var,left_operand,oper,right_operand);
+    fprintf(f_icg,"    %s = %s %s %s\n",new_var,left_operand,oper,right_operand);
+    
+    push_onto_icg_stack(new_var);
+
+    insert_into_quad(oper,left_operand,right_operand,new_var);
+}
+
+void logic_icg(){
+    char right_operand[20];
+    pop_from_icg_stack(right_operand);
+
+    char oper[20];
+    pop_from_icg_stack(oper);
+
+    char left_operand[20];
+    pop_from_icg_stack(left_operand);
+
+    char new_var[20];
+    create_inter_var(new_var);
+
+    fprintf(f_icg,"    %s = %s %s %s\n",new_var,left_operand,oper,right_operand);
     
     push_onto_icg_stack(new_var);
 
@@ -118,10 +140,10 @@ void inc_icg(){
     char new_var[20];
     create_inter_var(new_var);
 
-    fprintf(f_icg,"%s = %s %s %s\n",new_var,"1","+",operand);
+    fprintf(f_icg,"    %s = %s %s %s\n",new_var,"1","+",operand);
     insert_into_quad("+","1",operand,new_var);
 
-    fprintf(f_icg,"%s = %s\n",operand,new_var);
+    fprintf(f_icg,"    %s = %s\n",operand,new_var);
     insert_into_quad("=",new_var,"",operand);
 
     push_onto_icg_stack(operand);
@@ -134,10 +156,10 @@ void dec_icg(){
     char new_var[20];
     create_inter_var(new_var);
 
-    fprintf(f_icg,"%s = %s %s %s\n",new_var,"1","-",operand);
+    fprintf(f_icg,"    %s = %s %s %s\n",new_var,"1","-",operand);
     insert_into_quad("-","1",operand,new_var);
 
-    fprintf(f_icg,"%s = %s\n",operand,new_var);
+    fprintf(f_icg,"    %s = %s\n",operand,new_var);
     insert_into_quad("=",new_var,"",operand);
 
     push_onto_icg_stack(operand);
@@ -163,6 +185,8 @@ void create_branch()
 
     fprintf(f_icg,"%s:\n",branch);
     insert_into_quad("goto","","",branch);
+    top_loop++;
+    loop_stk[top_loop] = branch_no;
 }
 
 void rel_expr()
@@ -173,12 +197,12 @@ void rel_expr()
     char var_getting_val[20];
     create_inter_var(var_getting_val);
     
-    fprintf(f_icg,"%s = not %s\n",var_getting_val,val);
+    fprintf(f_icg,"    %s = not %s\n",var_getting_val,val);
     insert_into_quad("not",val,"",var_getting_val);
     
     char branch[20];
     create_new_branch_var(branch);
-    fprintf(f_icg,"if %s GOTO %s\n",var_getting_val,branch);
+    fprintf(f_icg,"    if %s GOTO %s\n",var_getting_val,branch);
     insert_into_quad("if",var_getting_val,"",branch);
 }
 
@@ -190,7 +214,7 @@ void while_branch_end(){
     sprintf(digit,"%d",br-1);
     strcat(branch,digit);
 
-    fprintf(f_icg,"GOTO %s\n",branch);
+    fprintf(f_icg,"    GOTO %s\n",branch);
     insert_into_quad("goto","","",branch);
 
     strcpy(branch,"L");
@@ -198,6 +222,7 @@ void while_branch_end(){
     strcat(branch,digit);
     fprintf(f_icg,"%s:\n",branch);
     top_br -= 2;
+    top_loop--;
 }
 
 void if_branch_end(){
@@ -219,7 +244,7 @@ void if_branch_end_with_else(){
 
     create_new_branch_var(branch);
 
-    fprintf(f_icg,"GOTO %s\n",branch);
+    fprintf(f_icg,"    GOTO %s\n",branch);
     insert_into_quad("goto","","",branch);
 
     int br = branch_stk[top_br-1];
@@ -234,7 +259,20 @@ void if_branch_end_with_else(){
 }
 
 void break_icg(){
-    int a;
+    if(inside_switch){
+        case_end();
+    }
+    else{
+        int br = loop_stk[top_loop];
+        char branch[20];
+        strcpy(branch,"L");
+        char digit[20];
+        sprintf(digit,"%d",br);
+        strcat(branch,digit);
+
+        fprintf(f_icg,"    GOTO %s\n",branch);
+        insert_into_quad("goto","","",branch);
+    }
 }
 
 void switch_test(){
@@ -244,14 +282,20 @@ void switch_test(){
     char new_var[20];
     create_inter_var(new_var);
 
-    fprintf(f_icg,"%s = %s\n",new_var,val);
+    fprintf(f_icg,"    %s = %s\n",new_var,val);
     insert_into_quad("=",val,"",new_var);
     push_onto_icg_stack(new_var);
     
- 
-    fprintf(f_icg,"GOTO test\n");
-    insert_into_quad("goto","","","test");
+    char branch[20];
+    strcpy(branch,"Test");
+    char digit[20];
+    sprintf(digit,"%d",switch_no);
+    strcat(branch,digit);
+
+    fprintf(f_icg,"    GOTO %s\n",branch);
+    insert_into_quad("goto","","",branch);
     case_no = 0;
+    inside_switch = 1;
 }
 
 void switch_case(){
@@ -264,13 +308,22 @@ void switch_case(){
 }
 
 void case_end(){
-    fprintf(f_icg,"GOTO last\n");
-    insert_into_quad("goto","","","last");
+    char branch[20];
+    strcpy(branch,"Last");
+    char digit[20];
+    sprintf(digit,"%d",switch_no);
+    strcat(branch,digit);
+    fprintf(f_icg,"    GOTO %s\n",branch);
+    insert_into_quad("goto","","",branch);
 }
 
 void switch_case_end(){
+    case_end();
     char branch[20];
-    strcpy(branch,"test");
+    strcpy(branch,"Test");
+    char digit[20];
+    sprintf(digit,"%d",switch_no);
+    strcat(branch,digit);
     fprintf(f_icg,"%s:\n",branch);
 
     char val[20];
@@ -291,15 +344,21 @@ void switch_case_end(){
         char new_var[20];
         create_inter_var(new_var);
         
-        fprintf(f_icg,"%s : %s %s %s\n",new_var,var_been_checked,"==",cases[temp]);
+        fprintf(f_icg,"    %s : %s %s %s\n",new_var,var_been_checked,"==",cases[temp]);
         insert_into_quad("==",var_been_checked,cases[temp],new_var);
 
-        fprintf(f_icg,"if %s GOTO %s\n",new_var, switch_stk[temp]);
+        fprintf(f_icg,"    if %s GOTO %s\n",new_var, switch_stk[temp]);
         insert_into_quad("if",new_var,"",switch_stk[temp]);
         temp +=1;
     }
     if(strcmp(cases[temp],"None")==0){
-        fprintf(f_icg,"GOTO %s\n",switch_stk[temp]);
+        fprintf(f_icg,"    GOTO %s\n",switch_stk[temp]);
         insert_into_quad("goto","","",switch_stk[temp]);
     }
+    strcpy(branch,"Last");
+    sprintf(digit,"%d",switch_no);
+    strcat(branch,digit);
+    fprintf(f_icg,"%s:\n",branch);
+    inside_switch = 0;
+    switch_no +=1;
 }

@@ -20,15 +20,15 @@ int type;
             sprintf(err_mes, "Identifier length too long: %s", identifier);     \
             yyerror(err_mes);                                                   \
             identifier_buffer[31] = 0;                                          \
-            sprintf(err_mes, "Identifier changed to : %s", identifier_buffer); \
-            yyerror(err_mes);                                                  \
+            sprintf(err_mes, "Identifier changed to : %s", identifier_buffer);  \
+            yyerror(err_mes);                                                   \
         }
 
-#define PRINT_TYPE_ERROR(value,expected,actual)                                                 \
-    sprintf(err1, "Implicit Type-Casting done.");                                               \
+#define PRINT_TYPE_ERROR(value,expected,actual)                                                         \
+    sprintf(err1, "Implicit Type-Casting done.");                                                       \
     sprintf(err_mes, "Invalid Type for %s. Expected %s, got %s." , identifier_buffer,expected,actual);  \
-    yyerror(err_mes);                                                                           \
-    sprintf(err_mes, "%s New Value for %s : %s",err1,identifier_buffer,value);                  \
+    yyerror(err_mes);                                                                                   \
+    sprintf(err_mes, "%s New Value for %s : %s",err1,identifier_buffer,value);                          \
     yyerror(err_mes);                                                                           
 
 
@@ -145,6 +145,7 @@ int type;
 char* GET_VALUE(int scope,char* name);
 float find_val(char* name);
 int find_val_int(char* name);
+
 %}
 
 %union {
@@ -279,8 +280,8 @@ loop_statement:         while_header '{' compound_statement '}'         { SYM_TA
     |                   while_header statement                          { SYM_TAB_DEL(scope); --scope; --loop;}
     ;
 
-jump_statement:         BREAK                                   {CHECK_LOOP(loop,"Break"); }
-    |                   CONTINUE                                {CHECK_LOOP(loop,"Continue"); }
+jump_statement:         BREAK                                           {CHECK_LOOP(loop,"Break"); }
+    |                   CONTINUE                                        {CHECK_LOOP(loop,"Continue"); }
     |                   RETURN expression
     ;
 
@@ -295,7 +296,7 @@ cases:                  CASE INT_CONS ':' compound_statement
     |                   cases CASE INT_CONS ':' compound_statement
     ;
                     
-default: DEFAULT ':' expression semi BREAK semi;
+default:                DEFAULT ':' compound_statement
     ;
 
 
@@ -338,9 +339,9 @@ bin_expression:         B_NOT expression                        {float temp = !f
     |                   expression B_RSHIFT expression          {int temp = find_val_int($1) >> find_val_int($3)  ;  sprintf($$,"%d", temp); }
     ;
 
-logic_expression:       NOT expression
-    |                   expression AND expression
-    |                   expression OR expression
+logic_expression:       NOT expression                          {int temp = !find_val_int($2)  ;  sprintf($$,"%d", temp); }
+    |                   expression AND expression               {int temp = find_val_int($1) && find_val_int($3)  ;  sprintf($$,"%d", temp); }         
+    |                   expression OR expression                {int temp = find_val_int($1) || find_val_int($3)  ;  sprintf($$,"%d", temp); } 
     ;
 
 inc_dec_expression:     INCREMENT IDENT                               { float temp = find_val($2) ; temp +=1 ; char res[20];  sprintf(res,"%f", temp); SYM_TAB_ADD(scope, $2, res, line_number);$$ = res;}

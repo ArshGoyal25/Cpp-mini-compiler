@@ -15,138 +15,6 @@ char type_spec_buffer[100];
 char identifier_buffer[100];
 int type;
 
-
-#define VALIDATE_IDENT_LEN(identifier)                                          \
-        strcpy(identifier_buffer, identifier);                                  \
-        if(strlen(identifier_buffer) > 31) {                                    \
-            sprintf(err_mes, "Identifier length too long: %s", identifier);     \
-            yyerror(err_mes);                                                   \
-            identifier_buffer[31] = 0;                                          \
-            sprintf(err_mes, "Identifier changed to : %s", identifier_buffer); \
-            yyerror(err_mes);                                                  \
-        }
-
-#define PRINT_TYPE_ERROR(value,expected,actual)                                                 \
-    sprintf(err1, "Implicit Type-Casting done.");                                               \
-    sprintf(err_mes, "Invalid Type for %s. Expected %s, got %s." , identifier_buffer,expected,actual);  \
-    yyerror(err_mes);                                                                           \
-    sprintf(err_mes, "%s New Value for %s : %s",err1,identifier_buffer,value);                  \
-    yyerror(err_mes);                                                                           
-
-
-#define CHECK_TYPE(type_spec, value, flag)                                                              \
-        if(strcmp(type_spec,"int") == 0){                                                               \
-            switch(type){                                                                               \
-                case 1 :  sprintf(value,"%d", value[1]);                                                \
-                        PRINT_TYPE_ERROR(value,"INT","CHAR") break ;                                    \
-                case 2 :  break;                                                                        \
-                case 3 :  sprintf(value,"%d",atoi(value));                                              \
-                        PRINT_TYPE_ERROR(value,"INT","FLOAT") break ;                                   \
-                case 4 :  if (strcmp(value,"true") == 0 || strcmp(value,"TRUE") == 0)                   \
-                                sprintf(value,"%d",1);                                                  \
-                          else                                                                          \
-                                sprintf(value,"%d",0);                                                  \
-                        PRINT_TYPE_ERROR(value,"INT","CHAR") break ;                                    \
-                case 5 :  sprintf(err1, "expected int,  got Type string"); flag =1 ; break;             \
-            }                                                                                           \
-        }                                                                                               \
-        else if(strcmp(type_spec,"float") == 0 || strcmp(type_spec,"double") == 0){                     \
-            switch(type){                                                                               \
-                case 1 :  sprintf(value,"%d", value[1]);                                                \
-                        PRINT_TYPE_ERROR(value,"FLOAT","CHAR") break ;                                  \
-                case 2 :  break;                                                                        \
-                case 3 :  break;                                                                        \
-                case 4 :  if (strcmp(value,"true") == 0 || strcmp(value,"TRUE") == 0)                   \
-                                sprintf(value,"%d",1);                                                  \
-                          else                                                                          \
-                                sprintf(value,"%d",0);                                                  \
-                        PRINT_TYPE_ERROR(value,"FLOAT","BOOL") break ;                                  \
-                case 5 :  sprintf(err1, "expected float,  got Type string"); flag =1 ; break;           \
-            }                                                                                           \
-        }                                                                                               \
-        else if(strcmp(type_spec,"char") == 0){                                                         \
-            switch(type){                                                                               \
-                case 1 :  sprintf(value,"%c",value[1]) ;break;                                          \
-                case 2 :  sprintf(value,"%c",atoi(value));                                              \
-                        PRINT_TYPE_ERROR(value,"CHAR","INT") break ;                                    \
-                case 3 :  sprintf(value,"%c",atoi(value));                                              \
-                        PRINT_TYPE_ERROR(value,"CHAR","FLOAT") break ;                                  \
-                case 4 :  if (strcmp(value,"true") == 0 || strcmp(value,"TRUE") == 0)                   \
-                                sprintf(value,"%d",1);                                                  \
-                          else                                                                          \
-                                sprintf(value,"%d",0);                                                  \
-                        PRINT_TYPE_ERROR(value,"CHAR","BOOL") break ;                                   \
-                case 5 :  sprintf(err1, "expected char,  got Type string"); flag =1 ; break;            \
-            }                                                                                           \
-        }                                                                                               \
-        else if(strcmp(type_spec,"bool") == 0){                                                         \
-            if(type == 5){                                                                              \
-                sprintf(err1, "expected char,  got Type string"); flag =1 ;                             \
-            }                                                                                           \
-            else if (type == 1 || type ==2 || type == 3){                                               \
-                if (atoi(value) == 0){                                                                  \
-                    strcpy(value,"Fal");                                                                \
-                }                                                                                       \
-                else{                                                                                   \
-                    strcpy(value,"True");                                                               \
-                }                                                                                       \
-            }                                                                                           \
-            PRINT_TYPE_ERROR(value,"BOOL","VALUE") break ;                                              \
-        }                                                                                               \
-        type = 0;                                                                     
-
-
-#define SYM_TAB_DECL(scope, name, type_spec, is_initialized, value, line_number)                                                    \
-        VALIDATE_IDENT_LEN(name);                                                                                                   \
-        int flag = 0;                                                                                                               \
-        int err = 0;                                                                                                                \
-        CHECK_TYPE(type_spec,value,flag);                                                                                           \
-        if(flag){                                                                                                                   \
-            sprintf(err_mes, "Invalid Type for %s,  %s" , identifier_buffer,err1);                                                  \
-            yyerror(err_mes);                                                                                                       \
-        }                                                                                                                           \
-        else {                                                                                                                      \
-            err = create_declaration_entry(scope, identifier_buffer, type_spec, storage, is_initialized, value, line_number);       \
-        }                                                                                                                           \
-        if(err) {                                                                                                                   \
-            sprintf(err_mes, "%s already declared in line %d", identifier_buffer, err);                                             \
-            yyerror(err_mes);                                                                                                       \
-        }
-
-#define SYM_TAB_ADD(scope, name, value, line_number)                                                                                \
-        int flag = 0;                                                                                                               \
-        int err = 0;                                                                                                                \
-        char *type_spec = (char*)malloc(20);                                                                                        \
-        strcpy(type_spec,find_var_type(scope, name, line_number));                                                                  \
-        if(strcmp(type_spec,"None") == 0) {                                                                                         \
-            sprintf(err_mes, "No declaration found for %s", name);                                                                  \
-            yyerror(err_mes);                                                                                                       \
-        }                                                                                                                           \
-        else {                                                                                                                      \
-            CHECK_TYPE(type_spec,value,flag);                                                                                       \
-            if(flag){                                                                                                               \
-                sprintf(err_mes, "Invalid Type for %s,  %s" , identifier_buffer,err1);                                              \
-                yyerror(err_mes);                                                                                                   \
-            }                                                                                                                       \
-            else                                                                                                                    \
-                err = create_mention_entry(scope, name, value, line_number);                                                        \
-            if(err) {                                                                                                               \
-                sprintf(err_mes, "No declaration found for %s", name);                                                              \
-                yyerror(err_mes);                                                                                                   \
-            }                                                                                                                       \
-        }
-
-#define TYPE_SPEC_SAVE(type_spec) strcpy(type_spec_buffer, type_spec);
-#define SYM_TAB_DEL(scope) remove_symbol_table_entry(symbol_table_fp, scope);
-#define CHECK_LOOP(loop,name)                                               \
-    if(loop == 0){                                                          \
-            sprintf(err_mes, "%s Statment Outside Loop",name);              \
-            yyerror(err_mes);                                               \
-    }
-
-char* GET_VALUE(int scope,char* name);
-float find_val(char* name);
-int find_val_int(char* name);
 %}
 
 %union {
@@ -292,11 +160,11 @@ switch_statement:       switch_header left_brac_c cases right_brac_c            
     |                   switch_header left_brac_c cases default right_brac_c      { switch_case_end(); --loop ;}
     ;
 
-cases:                  CASE INT_CONS ':'     {sprintf(var,"%d", $2); push_onto_icg_stack(var); switch_case();}      compound_statement         {case_end();}
-    |                   cases CASE INT_CONS ':'     {sprintf(var,"%d", $3); push_onto_icg_stack(var); switch_case();}     compound_statement    {case_end();}
+cases:                  CASE INT_CONS ':'     {sprintf(var,"%d", $2); push_onto_icg_stack(var); switch_case();}      compound_statement         
+    |                   cases CASE INT_CONS ':'     {sprintf(var,"%d", $3); push_onto_icg_stack(var); switch_case();}     compound_statement    
     ;
                     
-default:                DEFAULT ':'   {push_onto_icg_stack("None"); switch_case();}  compound_statement        { case_end();} 
+default:                DEFAULT ':'   {push_onto_icg_stack("None"); switch_case();}  compound_statement       
     ;
 
 value:                  CHAR_CONS           {sprintf(var,"%s", $1); $$ = var; push_onto_icg_stack(var); }
@@ -338,9 +206,9 @@ bin_expression:         B_NOT               {push_onto_icg_stack("%");}     expr
     |                   expression B_RSHIFT {push_onto_icg_stack(">>");}    expression              { bin_icg(); }
     ;
 
-logic_expression:       NOT expression
-    |                   expression AND expression
-    |                   expression OR expression
+logic_expression:       NOT                 {push_onto_icg_stack("&&");}    expression               { logic_icg(); }
+    |                   expression AND      {push_onto_icg_stack("&&");}    expression               { logic_icg(); }
+    |                   expression OR       {push_onto_icg_stack("!!");}    expression               { logic_icg(); }
     ;
 
 inc_dec_expression:     INCREMENT ident                               { inc_icg(); }
@@ -372,32 +240,5 @@ int main() {
 
     fclose(f_tokens);
     return 0;
-}
-
-
-char* GET_VALUE(int scope,char* name){
-        char * ans = (char*)(malloc(sizeof(char)*20)); 
-        strcpy(ans,"None");
-        //get_ident_value(scope,name,ans);
-        //printf("%s\n",ans);                                          
-        return ans;
-}
-
-float find_val(char* name){
-    float ans;
-    if (strcmp(GET_VALUE(scope,name),"None") == 0) 
-        ans = atof(name) ;
-    else 
-        ans =  atof(GET_VALUE(scope,name));
-    return ans;
-}
-
-int find_val_int(char* name){
-    int ans;
-    if (strcmp(GET_VALUE(scope,name),"None") == 0) 
-        ans = atoi(name) ;
-    else 
-        ans =  atoi(GET_VALUE(scope,name));
-    return ans;
 }
 ///////////////////////////////////////

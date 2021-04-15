@@ -25,4 +25,4 @@ quad.o: quad.c
 	gcc -c quad.c
 
 clean:
-	rm -rf *.o y.tab.o y.tab.c lex.yy.c miniCompiler y.tab.h y.output symbol_table.txt icg.txt quad.txt tokens.txt
+	rm -rf *.o y.tab.o y.tab.c lex.yy.c miniCompiler y.tab.h y.output *.txt

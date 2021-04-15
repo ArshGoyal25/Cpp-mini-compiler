@@ -22,4 +22,4 @@ y.tab.o: y.tab.c
 	gcc -c y.tab.c
 
 clean:
-	rm -rf *.o y.tab.c lex.yy.c miniCompiler y.tab.h y.output symbol_table.txt
+	rm -rf *.o y.tab.c lex.yy.c miniCompiler y.tab.h y.output *.txt

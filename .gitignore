@@ -3,10 +3,8 @@ y.tab.c
 y.tab.h
 *.out
 tokens.txt
-*.cpp
 test.c
 y.output
 *.o
 *.txt
 miniCompiler
-extra.txt

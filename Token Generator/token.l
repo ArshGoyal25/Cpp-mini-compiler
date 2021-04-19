@@ -12,6 +12,8 @@ int col_number = 1;
 int line_of_declaration = 0;
 int scope = 0;
 int loop = 0;
+int block = 0;
+int inter_var_no = 0;
 int storage;
 #define report_token(type, lexeme, line_number,col_number) 									\
 	fprintf(f_tokens, "<%s, '%s', %d, %d >\n", type, lexeme, line_number,col_number);		\

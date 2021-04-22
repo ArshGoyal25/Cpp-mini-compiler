@@ -8,3 +8,4 @@ y.output
 *.o
 *.txt
 miniCompiler
+.DS_Store

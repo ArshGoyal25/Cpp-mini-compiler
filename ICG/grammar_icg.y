@@ -228,13 +228,13 @@ void yyerror(char *string) {
 
 
 int main() {
-    yyin = fopen("input_file.cpp","r");
+    yyin = fopen("../input_file.cpp","r");
     f_tokens = fopen("tokens.txt","w");
-    f_icg = fopen("icg.txt","w");
+    f_icg = fopen("../icg.txt","w");
 
     yyparse();
 
-    f_quad = fopen("quad.txt","w");
+    f_quad = fopen("../quad.txt","w");
     write_quad(f_quad);
     fclose(f_quad);
 

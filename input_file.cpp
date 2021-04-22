@@ -18,7 +18,7 @@ int main()
 	// a=5;
 	// int c=b;
 
-    // float z1=4.2,z2=4.8;
+    float z1=4.2,z2=4.8;
 
 	// switch(d){
     //     case 1 : a = a +b;

@@ -7,6 +7,7 @@
 extern YYSTYPE yylval;
 
 char err_mes[200];
+char err_mes1[50];
 int line_number = 1;
 int col_number = 1;
 int line_of_declaration = 0;

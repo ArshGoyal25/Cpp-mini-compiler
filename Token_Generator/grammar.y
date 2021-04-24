@@ -6,9 +6,7 @@
 int yylex();
 void yyerror(char *s);
 
-char value[30];
-char err_mes[200];
-char err_mes1[50];
+char value[120];
 char type_spec_buffer[100];
 char identifier_buffer[100];
 char new_var[20];
@@ -36,8 +34,8 @@ int err;
 #define PRINT_TYPE_ERROR(value,expected,actual)                                                         \
     sprintf(err_mes, "Invalid Type for %s. Expected %s, got %s." , identifier_buffer,expected,actual);  \
     yyerror(err_mes);                                                                                   \
-    sprintf(err_mes, "Implicit Type-Casting done.");                                                       \
-    sprintf(err_mes, "%s New Value for %s : %s",err_mes,identifier_buffer,value);                          \
+    sprintf(err_mes1, "Implicit Type-Casting done.");                                                       \
+    sprintf(err_mes, "%s New Value for %s : %s",err_mes1,identifier_buffer,value);                          \
     yyerror(err_mes);                                                                           
 
 
@@ -296,18 +294,18 @@ declaration:         datatype list_var_declaration
     |                datatype array_declaration
     ;
 
-array_declaration:   IDENT '[' ']' '=' '{' list_value '}'                    { sprintf(value, "%s array", type_spec_buffer);  SYM_TAB_DECL(block, scope, $1, value, 1, "None", line_number); }
-    |                IDENT '[' expression ']'                                { sprintf(value, "%s array", type_spec_buffer);  SYM_TAB_DECL(block, scope, $1, value, 0, "None", line_number); }
-    |                IDENT '['expression ']' '=' '{' list_value '}'          { sprintf(value, "%s array", type_spec_buffer);  SYM_TAB_DECL(block, scope, $1, value, 1, "None", line_number); }
+array_declaration:   IDENT '[' ']' '=' '{' list_value '}'                    { char temp[100]; strcpy(temp,"None"); sprintf(value, "%s array", type_spec_buffer);  SYM_TAB_DECL(block, scope, $1, value, 1, temp, line_number); }
+    |                IDENT '[' expression ']'                                { char temp[100]; strcpy(temp,"None"); sprintf(value, "%s array", type_spec_buffer);  SYM_TAB_DECL(block, scope, $1, value, 0, temp, line_number); }
+    |                IDENT '['expression ']' '=' '{' list_value '}'          { char temp[100]; strcpy(temp,"None"); sprintf(value, "%s array", type_spec_buffer);  SYM_TAB_DECL(block, scope, $1, value, 1, temp, line_number); }
     ;
 
 list_value:             value ',' list_value
     |                   value
     ;          
 
-list_var_declaration:   IDENT                                         { SYM_TAB_DECL(block, scope, $1, type_spec_buffer, 0, "None", line_number); }
+list_var_declaration:   IDENT                                         { char temp[100]; strcpy(temp,"None"); SYM_TAB_DECL(block, scope, $1, type_spec_buffer, 0, temp, line_number); }
     |                   IDENT '=' expression                          { SYM_TAB_DECL(block, scope, $1, type_spec_buffer, 1, $3 , line_number); }
-    |                   IDENT ',' list_var_declaration                { SYM_TAB_DECL(block, scope, $1, type_spec_buffer, 0, "None" ,line_number); }
+    |                   IDENT ',' list_var_declaration                { char temp[100]; strcpy(temp,"None"); SYM_TAB_DECL(block, scope, $1, type_spec_buffer, 0, temp ,line_number); }
     |                   IDENT '=' expression                          { SYM_TAB_DECL(block, scope, $1, type_spec_buffer, 1, $3 , line_number);}           ',' list_var_declaration
     ;
 

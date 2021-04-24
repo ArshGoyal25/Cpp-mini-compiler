@@ -2,8 +2,9 @@
 int main()
 {
     int a = 30;
-    int b = 4;
-    int c = b*4;
+    int b = 4.3;
+    int c;
+    c = b*4;
     int d;
     if(c>10){
         c = c -10;

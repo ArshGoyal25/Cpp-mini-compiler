@@ -67,7 +67,7 @@ if __name__ == "__main__":
     optimized_icg.flush()
     read_symbol_table(symbol_table,optimized_icg)
 
-    
+
     optimized_icg.close()
     icg.close()
     symbol_table.close()

@@ -20,4 +20,4 @@ run:
 	$(RUN_ICG) && cd .. && $(RUN_TOKEN) && cd .. && $(RUN_OPT)
 
 clean:
-	rm *.txtm && $(CLEAN_ICG) && cd .. && $(CLEAN_TOKEN)
+	rm *.txt && $(CLEAN_ICG) && cd .. && $(CLEAN_TOKEN)

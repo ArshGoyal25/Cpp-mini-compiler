@@ -147,7 +147,7 @@ int err;
 #define TYPE_SPEC_SAVE(type_spec) strcpy(type_spec_buffer, type_spec);
 #define SYM_TAB_DEL(scope) \
     remove_symbol_table_entry(symbol_table_fp,scope);   \
-    remove_symbol_table_one_entry(symbol_table_one_fp,scope,block);
+    //remove_symbol_table_one_entry(symbol_table_one_fp,scope,block);
 #define CHECK_LOOP(loop,name)                                               \
     if(loop == 0){                                                          \
             sprintf(err_mes, "%s Statment Outside Loop",name);              \

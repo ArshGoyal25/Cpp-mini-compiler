@@ -5,7 +5,7 @@ CLEAN_ICG = cd ICG && make clean
 CLEAN_TOKEN = cd Token_Generator && make clean
 RUN_ICG = cd ICG && ./miniCompiler
 RUN_TOKEN = cd Token_Generator && ./miniCompiler
-RUN_OPT = python Optimization.py
+RUN_OPT = python3 Optimization.py
 
 all:
 	$(ICG) && cd .. && $(TOKEN)

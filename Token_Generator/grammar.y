@@ -34,8 +34,8 @@ int err;
 #define PRINT_TYPE_ERROR(value,expected,actual)                                                         \
     sprintf(err_mes, "Invalid Type for %s. Expected %s, got %s." , identifier_buffer,expected,actual);  \
     yyerror(err_mes);                                                                                   \
-    sprintf(err_mes1, "Implicit Type-Casting done.");                                                       \
-    sprintf(err_mes, "%s New Value for %s : %s",err_mes1,identifier_buffer,value);                          \
+    sprintf(err_mes1, "Implicit Type-Casting done.");                                                   \
+    sprintf(err_mes, "%s New Value for %s : %s",err_mes1,identifier_buffer,value);                      \
     yyerror(err_mes);                                                                           
 
 
@@ -52,7 +52,7 @@ int err;
                           else                                                                          \
                                 sprintf(value,"%d",0);                                                  \
                         PRINT_TYPE_ERROR(value,"INT","CHAR") break ;                                    \
-                case 5 :  sprintf(err_mes1, "Expected INT, got STRING"); flag =1 ; break;             \
+                case 5 :  sprintf(err_mes1, "Expected INT, got STRING"); flag =1 ; break;               \
                 default : sprintf(value,"%d",atoi(value)); break;                                       \
             }                                                                                           \
         }                                                                                               \
@@ -67,7 +67,7 @@ int err;
                           else                                                                          \
                                 sprintf(value,"%d",0);                                                  \
                         PRINT_TYPE_ERROR(value,"FLOAT","BOOL") break ;                                  \
-                case 5 :  sprintf(err_mes1, "Expected FLOAT, got STRING"); flag =1 ; break;           \
+                case 5 :  sprintf(err_mes1, "Expected FLOAT, got STRING"); flag =1 ; break;             \
             }                                                                                           \
         }                                                                                               \
         else if(strcmp(type_spec,"char") == 0){                                                         \
@@ -82,44 +82,43 @@ int err;
                           else                                                                          \
                                 sprintf(value,"%d",0);                                                  \
                         PRINT_TYPE_ERROR(value,"CHAR","BOOL") break ;                                   \
-                case 5 :  sprintf(err_mes1, "Expected CHAR, got STRING"); flag =1 ; break;            \
+                case 5 :  sprintf(err_mes1, "Expected CHAR, got STRING"); flag =1 ; break;              \
             }                                                                                           \
         }                                                                                               \
         else if(strcmp(type_spec,"bool") == 0){                                                         \
             if(type == 5){                                                                              \
-                sprintf(err_mes1, "Expected CHAR, got STRING"); flag =1 ;                             \
+                sprintf(err_mes1, "Expected CHAR, got STRING"); flag =1 ;                               \
             }                                                                                           \
             else if (type == 1 || type ==2 || type == 3){                                               \
                 if (atoi(value) == 0){                                                                  \
-                    strcpy(value,"Fal");                                                                \
+                    strcpy(value,"False");                                                              \
                 }                                                                                       \
                 else{                                                                                   \
                     strcpy(value,"True");                                                               \
                 }                                                                                       \
             }                                                                                           \
-            PRINT_TYPE_ERROR(value,"BOOL","VALUE") break ;                                              \
         }                                                                                               \
         type = 0;                                                                     
 
 
-#define SYM_TAB_DECL(block, scope, name, type_spec, is_initialized, value, line_number)                                                    \
+#define SYM_TAB_DECL(block, scope, name, type_spec, is_initialized, value, line_number)                                             \
         VALIDATE_IDENT_LEN(name);                                                                                                   \
-        flag = 0;                                                                                                               \
-        err = 0;                                                                                                                \
+        flag = 0;                                                                                                                   \
+        err = 0;                                                                                                                    \
         CHECK_TYPE(type_spec,value,flag);                                                                                           \
         if(flag){                                                                                                                   \
-            sprintf(err_mes, "Invalid Type for %s,  %s" , identifier_buffer,err_mes1);                                                  \
+            sprintf(err_mes, "Invalid Type for %s,  %s" , identifier_buffer,err_mes1);                                              \
             yyerror(err_mes);                                                                                                       \
         }                                                                                                                           \
         else {                                                                                                                      \
-            err = create_declaration_entry(block, scope, identifier_buffer, type_spec, storage, is_initialized, value, line_number);       \
+            err = create_declaration_entry(block, scope, identifier_buffer, type_spec, storage, is_initialized, value, line_number);\
         }                                                                                                                           \
         if(err) {                                                                                                                   \
             sprintf(err_mes, "%s already declared in line %d", identifier_buffer, err);                                             \
             yyerror(err_mes);                                                                                                       \
         }
 
-#define SYM_TAB_ADD(block, scope, name, value, line_number)                                                                                \
+#define SYM_TAB_ADD(block, scope, name, value, line_number)                                                                         \
         int flag = 0;                                                                                                               \
         int err = 0;                                                                                                                \
         char *type_spec = (char*)malloc(20);                                                                                        \
@@ -131,71 +130,79 @@ int err;
         else {                                                                                                                      \
             CHECK_TYPE(type_spec,value,flag);                                                                                       \
             if(flag){                                                                                                               \
-                sprintf(err_mes, "Invalid Type for %s,  %s" , identifier_buffer,err_mes1);                                              \
+                sprintf(err_mes, "Invalid Type for %s,  %s" , identifier_buffer,err_mes1);                                          \
                 yyerror(err_mes);                                                                                                   \
             }                                                                                                                       \
             else                                                                                                                    \
-                err = create_mention_entry(block, scope, name, value, line_number);                                                        \
+                err = create_mention_entry(block, scope, name, value, line_number);                                                 \
             if(err) {                                                                                                               \
                 sprintf(err_mes, "No declaration found for %s", name);                                                              \
                 yyerror(err_mes);                                                                                                   \
             }                                                                                                                       \
         }
 
-#define TYPE_SPEC_SAVE(type_spec) strcpy(type_spec_buffer, type_spec);
-#define SYM_TAB_DEL(scope) \
-    remove_symbol_table_entry(symbol_table_fp,scope);   \
-    //remove_symbol_table_one_entry(symbol_table_one_fp,scope,block);
+#define TYPE_SPEC_SAVE(type_spec)                       \
+    strcpy(type_spec_buffer, type_spec);
+
+#define SYM_TAB_DEL(scope)                              \
+    remove_symbol_table_entry(symbol_table_fp,scope);   
+    
 #define CHECK_LOOP(loop,name)                                               \
     if(loop == 0){                                                          \
-            sprintf(err_mes, "%s Statment Outside Loop",name);              \
+            sprintf(err_mes, "%s Statement Outside Loop",name);             \
             yyerror(err_mes);                                               \
     }
 
-#define CREATE_INTER_VAR() \
-    strcpy(new_var,"t"); \
-    sprintf(digit, "%d", inter_var_no);\
-    strcat(new_var,digit);\
+#define CREATE_INTER_VAR()                  \
+    strcpy(new_var,"t");                    \
+    sprintf(digit, "%d", inter_var_no);     \
+    strcat(new_var,digit);                  \
     inter_var_no++
 
-#define REL_EXP_INTER(value)    \
-    CREATE_INTER_VAR(); \
-    SYM_TAB_DECL(block, scope, new_var, "TEMP", 1, value, line_number);   \
-    SYM_TAB_ADD(block, scope, new_var, GET_VALUE(scope,new_var), line_number);\
-    CREATE_INTER_VAR(); \
-    int temp2 = atoi(value) ;  \
-    temp2 = !temp2;   \
-    sprintf(value,"%d",temp2);\
-    SYM_TAB_DECL(block,scope,new_var,"TEMP",1,value,line_number);
+#define REL_EXP_INTER(value)                                                                                 \
+    CREATE_INTER_VAR();                                                                                      \
+    char value_temp[120];                                                                                    \
+    if(strcmp(value,"1")){                                                                                   \
+        strcpy(value,"True");                                                                                \
+        strcpy(value_temp,"False");                                                                          \
+    }                                                                                                        \
+    else{                                                                                                    \
+        strcpy(value,"False");                                                                               \
+        strcpy(value_temp,"True");                                                                           \
+    }                                                                                                        \
+    SYM_TAB_DECL(block, scope, new_var, "TEMP", 1, value, line_number);                                      \
+    SYM_TAB_ADD(block, scope, new_var, GET_VALUE(scope,new_var), line_number);                               \
+    CREATE_INTER_VAR();                                                                                      \
+    SYM_TAB_DECL(block,scope,new_var,"TEMP",1,value_temp,line_number);
 
-#define EXP_INTER(value) \
-    CREATE_INTER_VAR(); \
-    SYM_TAB_DECL(block, scope, new_var, "TEMP", 1, value, line_number);\
+#define EXP_INTER(value)                                                                                     \
+    CREATE_INTER_VAR();                                                                                      \
+    SYM_TAB_DECL(block, scope, new_var, "TEMP", 1, value, line_number);
 
 
-#define SWITCH_START(value)     \
-    SYM_TAB_ADD(block, scope, value, GET_VALUE(scope,value), line_number);      \
-    CREATE_INTER_VAR();     \
-    strcpy(switch_inter_val,new_var);   \
-    SYM_TAB_DECL(block,scope,new_var,"TEMP",1,GET_VALUE(scope,value),line_number);  \
+#define SWITCH_START(value)                                                                                     \
+    SYM_TAB_ADD(block, scope, value, GET_VALUE(scope,value), line_number);                                      \
+    CREATE_INTER_VAR();                                                                                         \
+    strcpy(switch_inter_val,new_var);                                                                           \
+    SYM_TAB_DECL(block,scope,new_var,"TEMP",1,GET_VALUE(scope,value),line_number);                              
 
-#define CASE_VAR(scope,value)   \
-    if( atoi(GET_VALUE(scope,switch_inter_val)) == value)   \
-        switch_stk[case_no] = 1;   \
-    else    \
-        switch_stk[case_no] = 0;   \
+#define CASE_VAR(scope,value)                                                \
+    if( atoi(GET_VALUE(scope,switch_inter_val)) == value)                    \
+        switch_stk[case_no] = 1;                                             \
+    else                                                                     \
+        switch_stk[case_no] = 0;                                             \
     case_no++;
 
 
 
-#define SWITCH_END()    \
-    int i = 0;      \
-    while( i < case_no) {    \
-        CREATE_INTER_VAR(); \
-        sprintf(value,"%d",switch_stk[i]);    \
-        SYM_TAB_ADD(block,scope,switch_inter_val,GET_VALUE(scope,switch_inter_val),line_number);\
-        SYM_TAB_DECL(block, scope, new_var, "TEMP", 1,value, line_number); \
-        i++;\
+#define SWITCH_END()                                                                                \
+    int i = 0;                                                                                      \
+    while( i < case_no) {                                                                           \
+        CREATE_INTER_VAR();                                                                         \
+        sprintf(value,"%d",switch_stk[i]);                                                          \
+        SYM_TAB_ADD(block,scope,switch_inter_val,GET_VALUE(scope,switch_inter_val),line_number);    \
+        SYM_TAB_DECL(block, scope, new_var, "TEMP", 1,value, line_number);                          \
+        i++;                                                                                        \
     }
 
 
@@ -349,8 +356,8 @@ switch_statement:       switch_header left_brac_c cases              { SWITCH_EN
     |                   switch_header left_brac_c cases default      { SWITCH_END(); --loop ;} right_brac_c 
     ;
 
-cases:                  CASE INT_CONS ':'    compound_statement { CASE_VAR(scope,$2); } 
-    |                   cases CASE INT_CONS ':'  compound_statement {CASE_VAR(scope,$3);} 
+cases:                  CASE INT_CONS ':'    {scope++;} compound_statement { SYM_TAB_DEL(scope); --scope; CASE_VAR(scope,$2); } 
+    |                   cases CASE INT_CONS ':'  {scope++; }compound_statement { SYM_TAB_DEL(scope); --scope; CASE_VAR(scope,$3);} 
     ;
                     
 default:                DEFAULT ':' compound_statement

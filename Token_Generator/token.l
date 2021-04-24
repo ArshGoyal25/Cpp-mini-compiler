@@ -21,6 +21,7 @@ int storage;
 void yyerror(char *);
 FILE *f_tokens;
 FILE* symbol_table_fp;
+FILE* symbol_table_one_fp;
 
 %}
 

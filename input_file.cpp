@@ -4,40 +4,41 @@ int main()
     int a=0;
     a = 5;
     a =10;
+    // a++;
     int b =20;
-    int c= 10;
+    int c= a+b;
     int d =5;
     int f = a*b + c/d;
-    // switch(d){
-    //     case 1 : a = a +b;
-    //         break;
-    //     case 2 : c = a+b;
-    //     case 3 : d = a +b;
-    //     default: b = a+b;
-    // }
-	// a=5;
-	// int c=b;
-
-    float z1=4.2,z2=4.8;
+    // a = 50;
+    if(a<b){
+        b = a;
+        int z = 30;
+    }
+    a=20;
 
 	// switch(d){
     //     case 1 : a = a +b;
     //         break;
     //     case 2 : c = a+b;
     //         break;
-    //     case 3 : d = a +b;
+    //     case 5 : d = a +b;
     //         break;
     //     default: b = a+b;
     //     break;
     // }
-	// while(c<a){
-	// 	b = b+2;
-    //     c = 10;
-    //     if(b == 5)
-    //     {
-    //         break;
-    //     }
-	// }
+
+    // a = 50;
+	while(c<a){
+		b = b+2;
+        c = 10;
+        if(b == 5)
+        {
+            a = 10;
+            break;
+        }
+        a = 20;
+
+	}
 
 	// if(c<b)
 	// {

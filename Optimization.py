@@ -30,4 +30,5 @@ for line in symbol_table:
         # print(line)
 
 # print(st_dict)
+optimized_icg = open("optimized_icg.txt","w+")
 print_optimized_icg()

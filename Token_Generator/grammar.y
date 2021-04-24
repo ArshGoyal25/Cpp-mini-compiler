@@ -7,13 +7,21 @@ int yylex();
 void yyerror(char *s);
 
 char value[30];
-char var[120] ;
 char err_mes[200];
-char err1[50];
+char err_mes1[50];
 char type_spec_buffer[100];
 char identifier_buffer[100];
 char new_var[20];
+char switch_inter_val[20];
+char digit[20];
+int switch_stk[100];
+char icg_var_stack[100][20];
+int case_no = 0;
+int top = -1;
 int type;
+int flag;
+int err;
+
 
 #define VALIDATE_IDENT_LEN(identifier)                                          \
         strcpy(identifier_buffer, identifier);                                  \
@@ -26,10 +34,10 @@ int type;
         }
 
 #define PRINT_TYPE_ERROR(value,expected,actual)                                                         \
-    sprintf(err1, "Implicit Type-Casting done.");                                                       \
     sprintf(err_mes, "Invalid Type for %s. Expected %s, got %s." , identifier_buffer,expected,actual);  \
     yyerror(err_mes);                                                                                   \
-    sprintf(err_mes, "%s New Value for %s : %s",err1,identifier_buffer,value);                          \
+    sprintf(err_mes, "Implicit Type-Casting done.");                                                       \
+    sprintf(err_mes, "%s New Value for %s : %s",err_mes,identifier_buffer,value);                          \
     yyerror(err_mes);                                                                           
 
 
@@ -46,7 +54,7 @@ int type;
                           else                                                                          \
                                 sprintf(value,"%d",0);                                                  \
                         PRINT_TYPE_ERROR(value,"INT","CHAR") break ;                                    \
-                case 5 :  sprintf(err1, "expected int,  got Type string"); flag =1 ; break;             \
+                case 5 :  sprintf(err_mes1, "Expected INT, got STRING"); flag =1 ; break;             \
                 default : sprintf(value,"%d",atoi(value)); break;                                       \
             }                                                                                           \
         }                                                                                               \
@@ -61,7 +69,7 @@ int type;
                           else                                                                          \
                                 sprintf(value,"%d",0);                                                  \
                         PRINT_TYPE_ERROR(value,"FLOAT","BOOL") break ;                                  \
-                case 5 :  sprintf(err1, "expected float,  got Type string"); flag =1 ; break;           \
+                case 5 :  sprintf(err_mes1, "Expected FLOAT, got STRING"); flag =1 ; break;           \
             }                                                                                           \
         }                                                                                               \
         else if(strcmp(type_spec,"char") == 0){                                                         \
@@ -76,12 +84,12 @@ int type;
                           else                                                                          \
                                 sprintf(value,"%d",0);                                                  \
                         PRINT_TYPE_ERROR(value,"CHAR","BOOL") break ;                                   \
-                case 5 :  sprintf(err1, "expected char,  got Type string"); flag =1 ; break;            \
+                case 5 :  sprintf(err_mes1, "Expected CHAR, got STRING"); flag =1 ; break;            \
             }                                                                                           \
         }                                                                                               \
         else if(strcmp(type_spec,"bool") == 0){                                                         \
             if(type == 5){                                                                              \
-                sprintf(err1, "expected char,  got Type string"); flag =1 ;                             \
+                sprintf(err_mes1, "Expected CHAR, got STRING"); flag =1 ;                             \
             }                                                                                           \
             else if (type == 1 || type ==2 || type == 3){                                               \
                 if (atoi(value) == 0){                                                                  \
@@ -98,11 +106,11 @@ int type;
 
 #define SYM_TAB_DECL(block, scope, name, type_spec, is_initialized, value, line_number)                                                    \
         VALIDATE_IDENT_LEN(name);                                                                                                   \
-        int flag = 0;                                                                                                               \
-        int err = 0;                                                                                                                \
+        flag = 0;                                                                                                               \
+        err = 0;                                                                                                                \
         CHECK_TYPE(type_spec,value,flag);                                                                                           \
         if(flag){                                                                                                                   \
-            sprintf(err_mes, "Invalid Type for %s,  %s" , identifier_buffer,err1);                                                  \
+            sprintf(err_mes, "Invalid Type for %s,  %s" , identifier_buffer,err_mes1);                                                  \
             yyerror(err_mes);                                                                                                       \
         }                                                                                                                           \
         else {                                                                                                                      \
@@ -125,7 +133,7 @@ int type;
         else {                                                                                                                      \
             CHECK_TYPE(type_spec,value,flag);                                                                                       \
             if(flag){                                                                                                               \
-                sprintf(err_mes, "Invalid Type for %s,  %s" , identifier_buffer,err1);                                              \
+                sprintf(err_mes, "Invalid Type for %s,  %s" , identifier_buffer,err_mes1);                                              \
                 yyerror(err_mes);                                                                                                   \
             }                                                                                                                       \
             else                                                                                                                    \
@@ -137,7 +145,9 @@ int type;
         }
 
 #define TYPE_SPEC_SAVE(type_spec) strcpy(type_spec_buffer, type_spec);
-#define SYM_TAB_DEL(scope) remove_symbol_table_entry(symbol_table_fp, scope);
+#define SYM_TAB_DEL(scope) \
+    remove_symbol_table_entry(symbol_table_fp,scope);   \
+    remove_symbol_table_one_entry(symbol_table_one_fp,scope,block);
 #define CHECK_LOOP(loop,name)                                               \
     if(loop == 0){                                                          \
             sprintf(err_mes, "%s Statment Outside Loop",name);              \
@@ -146,10 +156,50 @@ int type;
 
 #define CREATE_INTER_VAR() \
     strcpy(new_var,"t"); \
-    char digit[20];\
     sprintf(digit, "%d", inter_var_no);\
     strcat(new_var,digit);\
-    inter_var_no++\
+    inter_var_no++
+
+#define REL_EXP_INTER(value)    \
+    CREATE_INTER_VAR(); \
+    SYM_TAB_DECL(block, scope, new_var, "TEMP", 1, value, line_number);   \
+    SYM_TAB_ADD(block, scope, new_var, GET_VALUE(scope,new_var), line_number);\
+    CREATE_INTER_VAR(); \
+    int temp2 = atoi(value) ;  \
+    temp2 = !temp2;   \
+    sprintf(value,"%d",temp2);\
+    SYM_TAB_DECL(block,scope,new_var,"TEMP",1,value,line_number);
+
+#define EXP_INTER(value) \
+    CREATE_INTER_VAR(); \
+    SYM_TAB_DECL(block, scope, new_var, "TEMP", 1, value, line_number);\
+
+
+#define SWITCH_START(value)     \
+    SYM_TAB_ADD(block, scope, value, GET_VALUE(scope,value), line_number);      \
+    CREATE_INTER_VAR();     \
+    strcpy(switch_inter_val,new_var);   \
+    SYM_TAB_DECL(block,scope,new_var,"TEMP",1,GET_VALUE(scope,value),line_number);  \
+
+#define CASE_VAR(scope,value)   \
+    if( atoi(GET_VALUE(scope,switch_inter_val)) == value)   \
+        switch_stk[case_no] = 1;   \
+    else    \
+        switch_stk[case_no] = 0;   \
+    case_no++;
+
+
+
+#define SWITCH_END()    \
+    int i = 0;      \
+    while( i < case_no) {    \
+        CREATE_INTER_VAR(); \
+        sprintf(value,"%d",switch_stk[i]);    \
+        SYM_TAB_ADD(block,scope,switch_inter_val,GET_VALUE(scope,switch_inter_val),line_number);\
+        SYM_TAB_DECL(block, scope, new_var, "TEMP", 1,value, line_number); \
+        i++;\
+    }
+
 
 char* GET_VALUE(int scope,char* name);
 float find_val(char* name);
@@ -221,9 +271,9 @@ left_brac_s:        '('
 right_brac_s:       ')'
     |               error { yyerror("Missing )\n");}
     ;		    
-left_brac_c:        '{'   { ++scope; }
+left_brac_c:        '{'   { ++scope; ++block;}
     ;
-right_brac_c:       '}'   { SYM_TAB_DEL(scope); --scope; }
+right_brac_c:       '}'   { SYM_TAB_DEL(scope); --scope; ++block; }
     ;
 
 compound_statement: statement compound_statement 
@@ -246,9 +296,9 @@ declaration:         datatype list_var_declaration
     |                datatype array_declaration
     ;
 
-array_declaration:   IDENT '[' ']' '=' '{' list_value '}'                    { sprintf(var, "%s array", type_spec_buffer);  SYM_TAB_DECL(block, scope, $1, var, 1, "None", line_number); }
-    |                IDENT '[' expression ']'                                { sprintf(var, "%s array", type_spec_buffer);  SYM_TAB_DECL(block, scope, $1, var, 0, "None", line_number); }
-    |                IDENT '['expression ']' '=' '{' list_value '}'          { sprintf(var, "%s array", type_spec_buffer);  SYM_TAB_DECL(block, scope, $1, var, 1, "None", line_number); }
+array_declaration:   IDENT '[' ']' '=' '{' list_value '}'                    { sprintf(value, "%s array", type_spec_buffer);  SYM_TAB_DECL(block, scope, $1, value, 1, "None", line_number); }
+    |                IDENT '[' expression ']'                                { sprintf(value, "%s array", type_spec_buffer);  SYM_TAB_DECL(block, scope, $1, value, 0, "None", line_number); }
+    |                IDENT '['expression ']' '=' '{' list_value '}'          { sprintf(value, "%s array", type_spec_buffer);  SYM_TAB_DECL(block, scope, $1, value, 1, "None", line_number); }
     ;
 
 list_value:             value ',' list_value
@@ -256,37 +306,37 @@ list_value:             value ',' list_value
     ;          
 
 list_var_declaration:   IDENT                                         { SYM_TAB_DECL(block, scope, $1, type_spec_buffer, 0, "None", line_number); }
-    |                   IDENT '=' expression                          { SYM_TAB_DECL(block, scope, $1, type_spec_buffer, 1, $3 , line_number);}
+    |                   IDENT '=' expression                          { SYM_TAB_DECL(block, scope, $1, type_spec_buffer, 1, $3 , line_number); }
     |                   IDENT ',' list_var_declaration                { SYM_TAB_DECL(block, scope, $1, type_spec_buffer, 0, "None" ,line_number); }
     |                   IDENT '=' expression                          { SYM_TAB_DECL(block, scope, $1, type_spec_buffer, 1, $3 , line_number);}           ',' list_var_declaration
     ;
 
 list_var:               IDENT '=' expression                         { SYM_TAB_ADD(block, scope, $1, $3, line_number);}
     |                   IDENT ',' list_var                           { SYM_TAB_ADD(block, scope, $1, GET_VALUE(scope,$1) ,line_number); }
-    |                   IDENT '=' expression                         { SYM_TAB_ADD(block, scope, $1, $3, line_number);}              ',' list_var
+    |                   IDENT '=' expression                         { SYM_TAB_ADD(block, scope, $1, GET_VALUE(scope,$3), line_number);}              ',' list_var
     ;
 
 if_header:              IF left_brac_s expression right_brac_s      { ++scope; ++block; }
     ;
 
-if_statement:           if_header '{' compound_statement '}'  %prec IFX              { SYM_TAB_DEL(scope); --scope; }
+if_statement:           if_header '{' compound_statement '}'  %prec IFX              { SYM_TAB_DEL(scope); --scope; ++block;}
     |                   if_header '{' compound_statement '}' else_statement          
-    |                   if_header statement %prec IFX                                { SYM_TAB_DEL(scope); --scope; }
+    |                   if_header statement %prec IFX                                { SYM_TAB_DEL(scope); --scope; ++block;}
     |                   if_header statement else_statement                           
     ;
 
 else_header:            ELSE                                            { SYM_TAB_DEL(scope); --scope; ++scope; ++block; }
     ;
 
-else_statement:         else_header statement                           { SYM_TAB_DEL(scope); --scope; }
-    |                   else_header '{' compound_statement '}'          { SYM_TAB_DEL(scope); --scope; }
+else_statement:         else_header statement                           { SYM_TAB_DEL(scope); --scope; ++block; }
+    |                   else_header '{' compound_statement '}'          { SYM_TAB_DEL(scope); --scope; ++block; }
     ;
 
 while_header:           WHILE left_brac_s expression right_brac_s       { ++scope; ++loop ; ++block; }
     ;
 
-loop_statement:         while_header '{' compound_statement '}'         { SYM_TAB_DEL(scope); --scope; --loop;}
-    |                   while_header statement                          { SYM_TAB_DEL(scope); --scope; --loop;}
+loop_statement:         while_header '{' compound_statement '}'         { SYM_TAB_DEL(scope); --scope; --loop; ++block;}
+    |                   while_header statement                          { SYM_TAB_DEL(scope); --scope; --loop; ++block;}
     ;
 
 jump_statement:         BREAK                                           {CHECK_LOOP(loop,"Break"); }
@@ -294,69 +344,69 @@ jump_statement:         BREAK                                           {CHECK_L
     |                   RETURN expression
     ;
 
-switch_header:           SWITCH left_brac_s IDENT right_brac_s                     { ++loop ; SYM_TAB_ADD(block, scope, $3, GET_VALUE(scope,$3), line_number); ++block;}
+switch_header:           SWITCH left_brac_s IDENT right_brac_s                     { ++loop ; SWITCH_START($3); }
     ;
 
-switch_statement:       switch_header left_brac_c cases right_brac_c              { --loop ;}
-    |                   switch_header left_brac_c cases default right_brac_c      { --loop ;}
+switch_statement:       switch_header left_brac_c cases              { SWITCH_END(); --loop ;} right_brac_c 
+    |                   switch_header left_brac_c cases default      { SWITCH_END(); --loop ;} right_brac_c 
     ;
 
-cases:                  CASE INT_CONS ':' compound_statement
-    |                   cases CASE INT_CONS ':' compound_statement
+cases:                  CASE INT_CONS ':'    compound_statement { CASE_VAR(scope,$2); } 
+    |                   cases CASE INT_CONS ':'  compound_statement {CASE_VAR(scope,$3);} 
     ;
                     
 default:                DEFAULT ':' compound_statement
     ;
 
 
-value:                  CHAR_CONS           {sprintf(var,"%s", $1); $$ = var; type=1;}
-    |                   INT_CONS            {sprintf(var,"%d", $1); $$ = var; type=2;}
-    |                   FLOAT_CONS          {sprintf(var,"%f", $1); $$ = var; type=3;}
-    |                   BOOL_CONS           {sprintf(var,"%s", $1); $$ = var; type=4;} 
-    |                   STRING_CONS         {sprintf(var,"%s", $1); $$ = var; type=5;}
+value:                  CHAR_CONS           {sprintf(value,"%s", $1); $$ = value; type=1;}
+    |                   INT_CONS            {sprintf(value,"%d", $1); $$ = value; type=2;}
+    |                   FLOAT_CONS          {sprintf(value,"%f", $1); $$ = value; type=3;}
+    |                   BOOL_CONS           {sprintf(value,"%s", $1); $$ = value; type=4;} 
+    |                   STRING_CONS         {sprintf(value,"%s", $1); $$ = value; type=5;}
     ;
 
-expression:             rel_expression
-    |                   bin_expression
-    |                   logic_expression
-    |                   arith_expression                    
-    |                   inc_dec_expression          
-    |                   value                               
-    |                   IDENT                                    {SYM_TAB_ADD(block, scope, $1, GET_VALUE(scope,$1), line_number); }                             
+expression:             rel_expression                          
+    |                   bin_expression                          {SYM_TAB_ADD(block, scope, new_var, GET_VALUE(scope,new_var), line_number);}
+    |                   logic_expression                        {SYM_TAB_ADD(block, scope, new_var, GET_VALUE(scope,new_var), line_number);}
+    |                   arith_expression                        {SYM_TAB_ADD(block, scope, new_var, GET_VALUE(scope,new_var), line_number);}
+    |                   inc_dec_expression                      {SYM_TAB_ADD(block, scope, new_var, GET_VALUE(scope,new_var), line_number);}   
+    |                   value                             
+    |                   IDENT                                    {SYM_TAB_ADD(block, scope, $1, GET_VALUE(scope,$1), line_number); float temp = find_val($1); sprintf($$,"%f", temp);}                             
     ;
 
-rel_expression:         expression LT expression                {int temp ; if (find_val($1) < find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp);}                 
-    |                   expression GT expression                {int temp ; if (find_val($1) > find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp);}
-    |                   expression LE expression                {int temp ; if (find_val($1) <= find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp);}
-    |                   expression GE expression                {int temp ; if (find_val($1) >= find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp);}
-    |                   expression EQ expression                {int temp ; if (find_val($1) == find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp);}
-    |                   expression NE expression                {int temp ; if (find_val($1) != find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp);}
+rel_expression:         expression LT expression                {int temp ; if (find_val($1) < find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp); REL_EXP_INTER($$); }                 
+    |                   expression GT expression                {int temp ; if (find_val($1) > find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp); REL_EXP_INTER($$);}
+    |                   expression LE expression                {int temp ; if (find_val($1) <= find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp); REL_EXP_INTER($$);}
+    |                   expression GE expression                {int temp ; if (find_val($1) >= find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp); REL_EXP_INTER($$);}
+    |                   expression EQ expression                {int temp ; if (find_val($1) == find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp); REL_EXP_INTER($$);}
+    |                   expression NE expression                {int temp ; if (find_val($1) != find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp); REL_EXP_INTER($$);}
     ;
 
-arith_expression:       expression '+' expression               {float temp = find_val($1) + find_val($3)  ;  sprintf($$,"%f", temp); CREATE_INTER_VAR(); SYM_TAB_DECL(block, scope, new_var, "TEMP", 1, $$, line_number);}     
-    |                   expression '-' expression               {float temp = find_val($1) - find_val($3)  ;  sprintf($$,"%f", temp); CREATE_INTER_VAR(); SYM_TAB_DECL(block, scope, new_var, "TEMP", 1, $$, line_number);} 
-    |                   expression '/' expression               {float temp = find_val($1) / find_val($3)  ;  sprintf($$,"%f", temp); CREATE_INTER_VAR(); SYM_TAB_DECL(block, scope, new_var, "TEMP", 1, $$, line_number);} 
-    |                   expression '*' expression               {float temp = find_val($1) * find_val($3)  ;  sprintf($$,"%f", temp); CREATE_INTER_VAR(); SYM_TAB_DECL(block, scope, new_var, "TEMP", 1, $$, line_number);} 
-    |                   expression '%' expression               {int temp = find_val_int($1) % find_val_int($3)  ;  sprintf($$,"%d", temp); CREATE_INTER_VAR(); SYM_TAB_DECL(block, scope, new_var, "TEMP", 1, $$, line_number);} 
+arith_expression:       expression '+' expression               {float temp = find_val($1) + find_val($3)  ;  sprintf($$,"%f", temp); EXP_INTER($$); }     
+    |                   expression '-' expression               {float temp = find_val($1) - find_val($3)  ;  sprintf($$,"%f", temp); EXP_INTER($$); } 
+    |                   expression '/' expression               {float temp = find_val($1) / find_val($3)  ;  sprintf($$,"%f", temp); EXP_INTER($$); } 
+    |                   expression '*' expression               {float temp = find_val($1) * find_val($3)  ;  sprintf($$,"%f", temp); EXP_INTER($$); } 
+    |                   expression '%' expression               {int temp = find_val_int($1) % find_val_int($3)  ;  sprintf($$,"%d", temp); EXP_INTER($$); } 
     ;
 
-bin_expression:         B_NOT expression                        {float temp = !find_val($2)  ;  sprintf($$,"%f", temp); }
-    |                   expression B_XOR expression             {int temp = find_val_int($1) ^ find_val_int($3)  ;  sprintf($$,"%d", temp); }
-    |                   expression B_AND expression             {int temp = find_val_int($1) & find_val_int($3)  ;  sprintf($$,"%d", temp); }
-    |                   expression B_OR expression              {int temp = find_val_int($1) | find_val_int($3)  ;  sprintf($$,"%d", temp); }
-    |                   expression B_LSHIFT expression          {int temp = find_val_int($1) << find_val_int($3)  ;  sprintf($$,"%d", temp); }
-    |                   expression B_RSHIFT expression          {int temp = find_val_int($1) >> find_val_int($3)  ;  sprintf($$,"%d", temp); }
+bin_expression:         B_NOT expression                        {float temp = !find_val($2)  ;  sprintf($$,"%f", temp); EXP_INTER($$); }
+    |                   expression B_XOR expression             {int temp = find_val_int($1) ^ find_val_int($3)  ;  sprintf($$,"%d", temp); EXP_INTER($$);  }
+    |                   expression B_AND expression             {int temp = find_val_int($1) & find_val_int($3)  ;  sprintf($$,"%d", temp); EXP_INTER($$); }
+    |                   expression B_OR expression              {int temp = find_val_int($1) | find_val_int($3)  ;  sprintf($$,"%d", temp); EXP_INTER($$); }
+    |                   expression B_LSHIFT expression          {int temp = find_val_int($1) << find_val_int($3)  ;  sprintf($$,"%d", temp); EXP_INTER($$); }
+    |                   expression B_RSHIFT expression          {int temp = find_val_int($1) >> find_val_int($3)  ;  sprintf($$,"%d", temp); EXP_INTER($$); }
     ;
 
-logic_expression:       NOT expression                          {int temp = !find_val_int($2)  ;  sprintf($$,"%d", temp); }
-    |                   expression AND expression               {int temp = find_val_int($1) && find_val_int($3)  ;  sprintf($$,"%d", temp); }         
-    |                   expression OR expression                {int temp = find_val_int($1) || find_val_int($3)  ;  sprintf($$,"%d", temp); } 
+logic_expression:       NOT expression                          {int temp = !find_val_int($2)  ;  sprintf($$,"%d", temp); EXP_INTER($$); }
+    |                   expression AND expression               {int temp = find_val_int($1) && find_val_int($3)  ;  sprintf($$,"%d", temp); EXP_INTER($$); }         
+    |                   expression OR expression                {int temp = find_val_int($1) || find_val_int($3)  ;  sprintf($$,"%d", temp); EXP_INTER($$); } 
     ;
 
-inc_dec_expression:     INCREMENT IDENT                               { float temp = find_val($2) ; temp +=1 ; char res[20];  sprintf(res,"%f", temp); SYM_TAB_ADD(block, scope, $2, res, line_number);$$ = res;}
-    |                   DECREMENT IDENT                               { float temp = find_val($2) ; temp -=1 ; char res[20];  sprintf(res,"%f", temp); SYM_TAB_ADD(block, scope, $2, res, line_number);$$ = res;}
-    |                   IDENT INCREMENT                               { float temp = find_val($1) ; temp +=1 ; char res[20];  sprintf(res,"%f", temp); SYM_TAB_ADD(block, scope, $1, res, line_number);$$ = res;}
-    |                   IDENT DECREMENT                               { float temp = find_val($1) ; temp -=1 ; char res[20];  sprintf(res,"%f", temp); SYM_TAB_ADD(block, scope, $1, res, line_number);$$ = res;}
+inc_dec_expression:     INCREMENT IDENT                               { float temp = find_val($2) ; temp +=1 ; char res[20];  sprintf(res,"%f", temp); SYM_TAB_ADD(block, scope, $2, res, line_number);$$ = res; EXP_INTER($$); }
+    |                   DECREMENT IDENT                               { float temp = find_val($2) ; temp -=1 ; char res[20];  sprintf(res,"%f", temp); SYM_TAB_ADD(block, scope, $2, res, line_number);$$ = res; EXP_INTER($$); }
+    |                   IDENT INCREMENT                               { float temp = find_val($1) ; temp +=1 ; char res[20];  sprintf(res,"%f", temp); SYM_TAB_ADD(block, scope, $1, res, line_number);$$ = res; EXP_INTER($$); }
+    |                   IDENT DECREMENT                               { float temp = find_val($1) ; temp -=1 ; char res[20];  sprintf(res,"%f", temp); SYM_TAB_ADD(block, scope, $1, res, line_number);$$ = res; EXP_INTER($$); }
     ;
 
 semi:                   ';'
@@ -372,7 +422,7 @@ int main() {
     yyin = fopen("../input_file.cpp","r");
     f_tokens = fopen("../tokens.txt","w");
     symbol_table_fp = fopen("../symbol_table.txt", "w");
-
+    symbol_table_one_fp = fopen("../symbol_table_one.txt","w");
     yyparse();
 
     fclose(f_tokens);

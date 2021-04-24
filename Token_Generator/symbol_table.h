@@ -29,4 +29,5 @@ int create_declaration_entry(int block, int scope, char* name, char* type,int st
 int create_mention_entry(int block, int scope, char* name, char* value, int line_number);
 char* find_var_type(int scope, char* name, int line_number);
 void remove_symbol_table_entry(FILE* symbol_table_fp, int scope);
+void remove_symbol_table_one_entry(FILE* symbol_table_one_fp, int scope, int block);
 void get_ident_value(int scope, char* name, char* value);

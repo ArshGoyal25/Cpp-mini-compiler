@@ -20,4 +20,4 @@ run:
 	$(RUN_ICG) && cd .. && $(RUN_TOKEN) && cd .. && $(RUN_OPT)
 
 clean:
-	rm icg.txt quad.txt symbol_table.txt tokens.txt && $(CLEAN_ICG) && cd .. && $(CLEAN_TOKEN)
+	rm *.txtm && $(CLEAN_ICG) && cd .. && $(CLEAN_TOKEN)

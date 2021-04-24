@@ -112,9 +112,9 @@ list_value:             value ',' list_value
     |                   value
     ;          
 
-list_var_declaration:   ident                                         { push_onto_icg_stack("None"); assign_icg();}
+list_var_declaration:   ident                                         { push_onto_icg_stack("0"); assign_icg();}
     |                   ident '=' expression                          { assign_icg();}
-    |                   ident ',' list_var_declaration                { push_onto_icg_stack("None"); assign_icg();}
+    |                   ident ',' list_var_declaration                { push_onto_icg_stack("0"); assign_icg();}
     |                   ident '=' expression                          { assign_icg();}           ',' list_var_declaration
     ;
 

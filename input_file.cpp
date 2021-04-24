@@ -2,13 +2,16 @@
 int main()
 {
     int a = 30;
-    int b = 4.3;
-    int c;
-    c = b*4;
-    int d;
+    int b = 4;
+    int c = 2;
+    b = b*4;
+    int d = 1;
+    int e = a * b / c;
     if(c>10){
-        c = c -10;
+        int c = 5;
+        c = d -10;
     }
+    a = 40;
     return c;
     //a =10;
     // a++;
@@ -23,16 +26,16 @@ int main()
     // }
     // a=20;
 
-	// switch(d){
-    //     case 1 : a = a +b;
-    //         break;
-    //     case 2 : c = a+b;
-    //         break;
-    //     case 5 : d = a +b;
-    //         break;
-    //     default: b = a+b;
-    //     break;
-    // }
+	switch(d){
+        case 1 : a = a +b;
+            break;
+        case 2 : c = a+b;
+            break;
+        case 5 : d = a +b;
+            break;
+        default: b = a+b;
+        break;
+    }
 
     // a = 50;
 	// while(c<a){

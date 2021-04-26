@@ -68,7 +68,7 @@ int type;
 
 %type <sval> value expression rel_expression bin_expression logic_expression arith_expression inc_dec_expression ident
 %%
-start:              header {printf("Program accepted\n"); }
+start:              {main_start(); }  header {printf("Program accepted\n"); main_end(); }
     ;
 header:             PRE_DIR header
     |               main    {printf("End of Main Function\n"); }
@@ -150,7 +150,7 @@ loop_statement:         while_header '{' compound_statement '}'         {while_b
 
 jump_statement:         BREAK               {break_icg();}                     
     |                   CONTINUE                               
-    |                   RETURN expression
+    |                   RETURN expression   {return_icg();}
     ;
 
 switch_header:           SWITCH left_brac_s ident right_brac_s                     { switch_test(); ++loop ;}

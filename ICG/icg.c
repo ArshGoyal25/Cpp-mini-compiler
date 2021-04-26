@@ -275,6 +275,19 @@ void break_icg(){
     }
 }
 
+void return_icg(){
+    char val[20];
+    pop_from_icg_stack(val);
+    fprintf(f_icg,"    return %s\n",val);
+    insert_into_quad("return","","",val);
+    char branch[20];
+    strcpy(branch,"end");
+
+    fprintf(f_icg,"    GOTO %s\n",branch);
+    insert_into_quad("goto","","",branch);
+
+}
+
 void switch_test(){
     char val[20];
     pop_from_icg_stack(val);
@@ -361,4 +374,15 @@ void switch_case_end(){
     fprintf(f_icg,"%s:\n",branch);
     inside_switch = 0;
     switch_no +=1;
+}
+
+void main_start(){
+    char branch[20];
+    strcpy(branch,"main");
+    fprintf(f_icg,"%s:\n",branch);
+}
+void main_end(){
+    char branch[20];
+    strcpy(branch,"end");
+    fprintf(f_icg,"%s:\n",branch);
 }

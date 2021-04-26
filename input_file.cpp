@@ -1,19 +1,26 @@
 #include<iostream>
 int main()
 {
-    int a = 5;
-    int b = 4;
-    int c = 2;
-    b = b*4;
-    int d = 1;
-    int e = a * b / c+d;
-    while(c<10){
-        c = c+1;
-        d = d -c;
+    // int a = 5;
+    // int b = 4;
+    // int c = 2;
+    // b = b*4;
+    // int d = 1;
+    // int e = a * b / c+d;
+    // while(c<10){
+    //     c = c+1;
+    //     d = d -c;
+    // }
+    int c =200;
+    while(c>1){
+        c = 100;
+        break;
+        c = 50;
     }
-    a = 40;
-    //return c;
-    //a =10;
+    int a = 40;
+    if(c<1){
+        c = 20;
+    }
     // a++;
     // int b =20;
     // int c= a+b;
@@ -24,18 +31,19 @@ int main()
     //     b = a;
     //     int z = 30;
     // }
-    // a=20;
-
-	// switch(d){
-    //     case 1 : a = a + b ;
-    //         break;
-    //     case 2 : c = a + b;
-    //         break;
-    //     case 5 : d = a + b;
-    //         break;
-    //     default: b = a + b;
-    //         break;
-    // }
+    // // a=20;
+    int d = 2;
+    int b = 10;
+	switch(d){
+        case 1 : a = a + b ;
+            break;
+        case 2 : c = a + b;
+            break;
+        case 5 : d = a + b;
+            break;
+        default: b = a + b;
+            break;
+    }
 
     // a = 50;
 	// while(c<a){

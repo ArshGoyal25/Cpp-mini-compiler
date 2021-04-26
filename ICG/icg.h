@@ -27,10 +27,13 @@ void while_branch_end();
 void if_branch_end();
 void if_branch_end_with_else();
 void break_icg();
+void return_icg();
 void switch_test();
 void switch_case();
 void case_end();
 void switch_case_end();
+void main_start();
+void main_end();
 
 
 

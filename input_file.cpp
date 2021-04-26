@@ -11,15 +11,14 @@ int main()
     //     c = c+1;
     //     d = d -c;
     // }
-    int c =200;
-    while(c>1){
-        c = 100;
-        break;
-        c = 50;
+    int a = 10;
+    int c = 20;
+    int b;
+    if(c > 30){
+        b = 100;
     }
-    int a = 40;
-    if(c<1){
-        c = 20;
+    if(c > 5){
+        b = 200;
     }
     // a++;
     // int b =20;
@@ -32,18 +31,18 @@ int main()
     //     int z = 30;
     // }
     // // a=20;
-    int d = 2;
-    int b = 10;
-	switch(d){
-        case 1 : a = a + b ;
-            break;
-        case 2 : c = a + b;
-            break;
-        case 5 : d = a + b;
-            break;
-        default: b = a + b;
-            break;
-    }
+    // int d = 2;
+    // int b = 10;
+	// switch(d){
+    //     case 1 : a = a + b ;
+    //         break;
+    //     case 2 : c = a + b;
+    //         break;
+    //     case 5 : d = a + b;
+    //         break;
+    //     default: b = a + b;
+    //         break;
+    // }
 
     // a = 50;
 	// while(c<a){

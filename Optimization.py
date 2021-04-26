@@ -84,7 +84,7 @@ def constant_optimize(symbol_table, icg):
         num_identifiers, should_skip, GOTO, RETURN, NOT = find_ident_and_skip(len(identifiers), identifiers, line)
         if NOT:
             condition_check = symbol_table[line_num+1].value
-            #print(condition_check , symbol_table[line_num+1].name)
+            print(condition_check , symbol_table[line_num+1].name)
             if(condition_check == "True"):
                 find_labels = re.findall(labels_regex,icg[i+1])
                 label = f"{find_labels[0]}:"
@@ -120,7 +120,7 @@ def constant_optimize(symbol_table, icg):
 
 if __name__ == "__main__":
     symbol_table = read_symbol_table('symbol_table.txt')
-    print(*symbol_table, sep = "\n")
+    #print(*symbol_table, sep = "\n")
     icg = read_icg('icg.txt')
     constant_optimize(symbol_table, icg)    
     print(*icg, sep = "\n")

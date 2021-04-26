@@ -162,7 +162,7 @@ int err;
 #define REL_EXP_INTER(value)                                                                                 \
     CREATE_INTER_VAR();                                                                                      \
     char value_temp[120];                                                                                    \
-    if(strcmp(value,"1")){                                                                                   \
+    if(strcmp(value,"0")){                                                                                   \
         strcpy(value,"True");                                                                                \
         strcpy(value_temp,"False");                                                                          \
     }                                                                                                        \

@@ -31,18 +31,18 @@ int main()
     //     int z = 30;
     // }
     // // a=20;
-    // int d = 2;
+    int d = 2;
     // int b = 10;
-	// switch(d){
-    //     case 1 : a = a + b ;
-    //         break;
-    //     case 2 : c = a + b;
-    //         break;
-    //     case 5 : d = a + b;
-    //         break;
-    //     default: b = a + b;
-    //         break;
-    // }
+	switch(d){
+        case 1 : a = a + b ;
+            break;
+        case 2 : c = a + b;
+            break;
+        case 5 : d = a + b;
+            break;
+        default: b = a + b;
+            break;
+    }
 
     // a = 50;
 	// while(c<a){

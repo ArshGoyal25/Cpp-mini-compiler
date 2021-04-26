@@ -17,7 +17,10 @@ run_token:
 	cd Token_Generator && $(EXEC)
 
 run:
-	$(RUN_ICG) && cd .. && $(RUN_TOKEN) && cd .. && $(RUN_OPT)
+	$(RUN_ICG) && cd .. && $(RUN_TOKEN) && cd ..
+
+run_opt:
+	$(RUN_OPT) > optimized_icg.txt
 
 clean:
 	rm *.txt && $(CLEAN_ICG) && cd .. && $(CLEAN_TOKEN)

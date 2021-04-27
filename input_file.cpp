@@ -16,6 +16,7 @@ int main()
     }
     else
         b = 200;
+    return b;
 	switch(d){
         case 1 : a = a + b ;
             break;

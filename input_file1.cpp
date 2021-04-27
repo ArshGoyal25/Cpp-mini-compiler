@@ -4,7 +4,7 @@ int main(){
     int c;
     c = 10;
     int d = 20;
-    int e = b/a + c*d;
+    int e = b/a * c*d;
     if(b>a){
         a = b;
         b++;

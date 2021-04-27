@@ -5,7 +5,7 @@ int main()
     int b = 4;
     int c = 2;
     b = b*4;
-    int d = 1;
+    int d = 5;
     int e = a * b / c+d;
     while(c<10){
         c = c+1;
@@ -16,7 +16,6 @@ int main()
     }
     else
         b = 200;
-
 	switch(d){
         case 1 : a = a + b ;
             break;

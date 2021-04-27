@@ -42,7 +42,8 @@ def constant_optimize(symbol_table, icg):
         RETURN = False
         NOT = False
         if ':' in line:
-            return (0, True, False, False, False)
+            if(len(line) < 10):
+                return (0, True, False, False, False)
         for identifier in identifiers:
             if identifier in ["if"]:
                 updated_identifiers -= 1

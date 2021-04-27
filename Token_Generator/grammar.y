@@ -199,7 +199,10 @@ int err;
     int i = 0;                                                                                      \
     while( i < case_no) {                                                                           \
         CREATE_INTER_VAR();                                                                         \
-        sprintf(value,"%d",switch_stk[i]);                                                          \
+        if(switch_stk[i] == 1)                                                                      \
+            sprintf(value,"%s","True");                                                             \
+        else                                                                                        \
+            sprintf(value,"%s","False");                                                            \
         SYM_TAB_ADD(block,scope,switch_inter_val,GET_VALUE(scope,switch_inter_val),line_number);    \
         SYM_TAB_DECL(block, scope, new_var, "TEMP", 1,value, line_number);                          \
         i++;                                                                                        \

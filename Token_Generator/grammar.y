@@ -53,7 +53,7 @@ int err;
                                 sprintf(value,"%d",0);                                                  \
                         PRINT_TYPE_ERROR(value,"INT","CHAR") break ;                                    \
                 case 5 :  sprintf(err_mes1, "Expected INT, got STRING"); flag =1 ; break;               \
-                default : sprintf(value,"%d",atoi(value)); break;                                       \
+                default : if(strcmp(value,"None") ==0 ) break; else {sprintf(value,"%d",atoi(value)); break;}                                       \
             }                                                                                           \
         }                                                                                               \
         else if(strcmp(type_spec,"float") == 0 || strcmp(type_spec,"double") == 0){                     \
@@ -318,7 +318,7 @@ list_var_declaration:   IDENT                                         { char tem
 
 list_var:               IDENT '=' expression                         { SYM_TAB_ADD(block, scope, $1, $3, line_number);}
     |                   IDENT ',' list_var                           { SYM_TAB_ADD(block, scope, $1, GET_VALUE(scope,$1) ,line_number); }
-    |                   IDENT '=' expression                         { SYM_TAB_ADD(block, scope, $1, GET_VALUE(scope,$3), line_number);}              ',' list_var
+    |                   IDENT '=' expression                         { SYM_TAB_ADD(block, scope, $1, $3, line_number);}              ',' list_var
     ;
 
 if_header:              IF left_brac_s expression right_brac_s      { ++scope; ++block; }
@@ -352,12 +352,16 @@ jump_statement:         BREAK                                           {CHECK_L
 switch_header:           SWITCH left_brac_s IDENT right_brac_s                     { ++loop ; SWITCH_START($3); }
     ;
 
-switch_statement:       switch_header left_brac_c cases              { SWITCH_END(); --loop ;} right_brac_c 
-    |                   switch_header left_brac_c cases default      { SWITCH_END(); --loop ;} right_brac_c 
+switch_start:           switch_header left_brac_c compound_statement
+    |                   switch_header left_brac_c
+    ;
+
+switch_statement:       switch_start cases              { SWITCH_END(); --loop ;} right_brac_c 
+    |                   switch_start cases default      { SWITCH_END(); --loop ;} right_brac_c 
     ;
 
 cases:                  CASE INT_CONS ':'    {scope++;} compound_statement { SYM_TAB_DEL(scope); --scope; CASE_VAR(scope,$2); } 
-    |                   cases CASE INT_CONS ':'  {scope++; }compound_statement { SYM_TAB_DEL(scope); --scope; CASE_VAR(scope,$3);} 
+    |                   cases CASE INT_CONS ':'  {scope++; }compound_statement { SYM_TAB_DEL(scope); --scope; CASE_VAR(scope,$3);}
     ;
                     
 default:                DEFAULT ':' compound_statement
@@ -377,7 +381,7 @@ expression:             rel_expression
     |                   arith_expression                        {SYM_TAB_ADD(block, scope, new_var, GET_VALUE(scope,new_var), line_number);}
     |                   inc_dec_expression                      {SYM_TAB_ADD(block, scope, new_var, GET_VALUE(scope,new_var), line_number);}   
     |                   value                             
-    |                   IDENT                                    {SYM_TAB_ADD(block, scope, $1, GET_VALUE(scope,$1), line_number); float temp = find_val($1); sprintf($$,"%f", temp);}                             
+    |                   IDENT                                    {SYM_TAB_ADD(block, scope, $1, GET_VALUE(scope,$1), line_number);  float temp = find_val($1); sprintf($$,"%f", temp);}                             
     ;
 
 rel_expression:         expression LT expression                {int temp ; if (find_val($1) < find_val($3)) temp = 1; else temp = 0; sprintf($$,"%d", temp); REL_EXP_INTER($$); }                 
@@ -427,7 +431,6 @@ int main() {
     yyin = fopen("../input_file.cpp","r");
     f_tokens = fopen("../tokens.txt","w");
     symbol_table_fp = fopen("../symbol_table.txt", "w");
-    symbol_table_one_fp = fopen("../symbol_table_one.txt","w");
     yyparse();
 
     fclose(f_tokens);
@@ -439,7 +442,7 @@ char* GET_VALUE(int scope,char* name){
         char * ans = (char*)(malloc(sizeof(char)*20)); 
         strcpy(ans,"None");
         get_ident_value(scope,name,ans);
-        //printf("%s\n",ans);                                          
+        // printf("here%s\n",ans);                                          
         return ans;
 }
 

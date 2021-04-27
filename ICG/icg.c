@@ -288,17 +288,7 @@ void return_icg(){
 
 }
 
-void switch_test(){
-    char val[20];
-    pop_from_icg_stack(val);
-
-    char new_var[20];
-    create_inter_var(new_var);
-
-    fprintf(f_icg,"    %s = %s\n",new_var,val);
-    insert_into_quad("=",val,"",new_var);
-    push_onto_icg_stack(new_var);
-    
+void start_cases(){
     char branch[20];
     strcpy(branch,"Test");
     char digit[20];
@@ -309,6 +299,19 @@ void switch_test(){
     insert_into_quad("goto","","",branch);
     case_no = 0;
     inside_switch = 1;
+}
+
+void switch_test(){
+    char val[20];
+    pop_from_icg_stack(val);
+
+    char new_var[20];
+    create_inter_var(new_var);
+
+    fprintf(f_icg,"    %s = %s\n",new_var,val);
+    insert_into_quad("=",val,"",new_var);
+    push_onto_icg_stack(new_var);
+
 }
 
 void switch_case(){

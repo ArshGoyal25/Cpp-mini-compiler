@@ -128,8 +128,3 @@ void remove_symbol_table_entry(FILE* symbol_table_fp, int scope) {
     display_symbol_table(symbol_table_fp, scope);
     delete_symbol_table(scope);
 }
-
-void remove_symbol_table_one_entry(FILE* symbol_table_one_fp, int scope, int block) {
-    display_symbol_table(symbol_table_one_fp, scope);
-    delete_symbol_table(scope);
-}

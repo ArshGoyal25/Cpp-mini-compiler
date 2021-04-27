@@ -156,12 +156,16 @@ jump_statement:         BREAK               {break_icg();}
 switch_header:           SWITCH left_brac_s ident right_brac_s                     { switch_test(); ++loop ;}
     ;
 
-switch_statement:       switch_header left_brac_c cases right_brac_c              { switch_case_end(); --loop ;}
-    |                   switch_header left_brac_c cases default right_brac_c      { switch_case_end(); --loop ;}
+switch_start:           switch_header left_brac_c compound_statement    {start_cases();}
+    |                   switch_header left_brac_c                       {start_cases();}    
+    ;
+
+switch_statement:       switch_start cases right_brac_c                     { switch_case_end(); --loop ;}
+    |                   switch_start cases default right_brac_c             { switch_case_end(); --loop ;}
     ;
 
 cases:                  CASE INT_CONS ':'     {sprintf(var,"%d", $2); push_onto_icg_stack(var); switch_case();}      compound_statement         
-    |                   cases CASE INT_CONS ':'     {sprintf(var,"%d", $3); push_onto_icg_stack(var); switch_case();}     compound_statement    
+    |                   cases CASE INT_CONS ':'     {sprintf(var,"%d", $3); push_onto_icg_stack(var); switch_case();}     compound_statement
     ;
                     
 default:                DEFAULT ':'   {push_onto_icg_stack("None"); switch_case();}  compound_statement       
